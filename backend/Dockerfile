@@ -6,7 +6,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-EXPOSE 1323
+EXPOSE 8080
 CMD ["air", "-c", ".air.toml"]
 
 

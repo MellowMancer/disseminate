@@ -6,7 +6,7 @@ services:
       - ./backend:/app       # Source code sync for hot reload
       - /app/tmp             # Air temp directory (anonymous volume)
     ports:
-      - "1323:1323"
+      - "8080:8080"
     command: ["air", "-c", ".air.toml"]
 
   frontend:
