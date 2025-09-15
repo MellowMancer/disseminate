@@ -13,14 +13,9 @@ services:
     build:
       context: ./frontend
     volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
-      - ./frontend/package.json:/app/package.json:ro
-      - ./frontend/yarn.lock:/app/yarn.lock:ro
-      - ./frontend/.yarn:/app/.yarn:ro
+      - ./frontend:/app
       - /app/node_modules
     ports:
       - "5173:5173"
     environment:
       - REACT_APP_API_URL=http://localhost:1323/api
-
