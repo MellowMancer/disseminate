@@ -1,4 +1,14 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import './assets/fonts.css';
 
-@custom-variant dark (&:is(.dark *));
+@theme {
+    --color-primary: #00E09A;
+    --color-secondary: #386150;
+    --color-accent: #FFEAEC;
+    --color-background: #053C39;
+}
+
+@theme {
+    --font-family-sans: "Fira Sans", sans-serif;
+}

@@ -10,10 +10,7 @@ function App() {
   return (
       <Routes>
 
-        <Route path="/" element={
-          <ProtectedRoute>
-            <HomePage />
-          </ProtectedRoute>} />
+        <Route path="/" element={ <HomePage />} />
         {/* <Route path="/about" element={<AboutPage />} /> */}
         <Route path="/auth" element={<CloudAuthPage />} />
         <Route path="/local" element={<LocalAccountPage />} />
