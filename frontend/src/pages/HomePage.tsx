@@ -1,36 +1,119 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import { useForm, type SubmitHandler } from "react-hook-form";
+import {
+    Form,
+    FormItem,
+    FormLabel,
+    FormControl,
+    FormDescription,
+    FormMessage,
+    FormField,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from 'sonner';
+
+type FormValues = {
+    files: FileList;
+};
 
 export default function HomePage() {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4 text-center max-w-xl mx-auto">
-      <h1 className="text-4xl font-extrabold mb-4 text-gray-900">
-        Disseminate
-      </h1>
-      <p className="text-lg text-gray-700 mb-6">
-        Post to multiple social media platforms from a single, easy-to-use dashboard.
-        Save time and reach your audience effortlessly.
-      </p>
-      <nav className="space-x-4">
-        <Link
-          to="/upload"
-          className="px-5 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-        >
-          Start Posting
-        </Link>
-        <Link
-          to="/about"
-          className="px-5 py-3 text-blue-600 rounded-md border border-blue-600 hover:bg-blue-50 transition"
-        >
-          About
-        </Link>
-        <Link
-          to="/auth"
-          className="px-5 py-3 text-gray-700 rounded-md hover:text-gray-900 transition"
-        >
-          Login
-        </Link>
-      </nav>
-    </div>
-  );
+    const form = useForm<FormValues>({
+        mode: "onChange",
+    });
+
+    const onSubmit: SubmitHandler<FormValues> = (data) => {
+        alert(`${data.files.length} file(s) selected`);
+    };
+
+    const handleStartPostingClick = () => {
+        toast.success('Yeah, the button does not do much, I just kept it because it makes the UI look prettier');
+    };
+
+    return (
+        <div className="h-screen w-screen flex flex-col md:flex-row bg-background py-16 px-8 md:py-8 md:px-24 mx-auto text-white font-sans">
+            {/* Left half */}
+            <div className="md:w-1/2 flex flex-col justify-center pr-8 md:pr-16 mb-16 md:mb-0">
+                <h1 className="text-3xl md:text-5xl font-bold mb-2 md:mb-6 text-primary">Disseminate</h1>
+                <p className="text-l md:text-xl text-accent mb-8">
+                    Post to multiple social media platforms from a single dashboard.
+                    Supports Bluesky, Twitter, Instagram, Youtube, Mastodon, Artstation, Reddit
+                </p>
+                <nav className="space-x-4">
+                    <Button
+                        onClick={handleStartPostingClick}
+                        className=" bg-primary text-gray-900 rounded-md hover:bg-primary/60 transition"
+                    >
+                        Start Posting
+                    </Button>
+                    {/* <Link
+                        to="/about"
+                        className="px-6 py-3 text-blue-600 rounded-md border border-blue-600 hover:bg-blue-50 transition"
+                    >
+                        About
+                    </Link> */}
+                    {/* <Link
+                        to="/auth"
+                        className="px-6 py-3 text-gray-700 rounded-md hover:text-gray-900 transition"
+                    >
+                        Login
+                    </Link> */}
+                </nav>
+            </div>
+
+            {/* Right half - File upload form */}
+            <div className="md:w-1/2 flex flex-col justify-center text-gray-900">
+                <div className="flex-col justify-start bg-gray-800 text-white shadow-md rounded-lg p-8">
+                    <h2 className="text-2xl mb-6 text-primary text-start font-semibold">Upload your content</h2>
+
+                    <Form {...form}>
+                        <form
+                            onSubmit={form.handleSubmit(onSubmit)}
+                            className="max-w-lg mx-auto space-y-6"
+                        >
+                            <FormField
+                                control={form.control}
+                                name="files"
+                                rules={{
+                                    required: "Please select at least one file.",
+                                }}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel><b>Select File(s)</b></FormLabel>
+                                        <FormControl className="flex-col justify-center border-1 m-0 p-0 h-10">
+                                            <Input
+                                                type="file"
+                                                multiple
+                                                onChange={(e) => field.onChange(e.target.files)}
+                                                className="file:bg-primary file:text-gray-900 file:border-none file:rounded-md file:h-full file:py-2 file:px-2 file:mr-2 file:text-sm file:font-medium cursor-pointer flex-col justify-center"
+                                                accept=".mp4, .avi, .mkv, .ogg, .webm, .m4v, .mov, .jpg, .webp, .HEIC, .HEIC, .png, .jpeg, .tiff "
+                                            />
+                                        </FormControl>
+                                        <FormDescription>You can choose one or more files. <div className="text-s text-gray-500"><i>Supports .mp4, .avi, .mkv, .ogg, .webm, .m4v, .mov, .jpg, .webp, .HEIC, .HEIC, .png, .jpeg, .tiff </i></div></FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <Button type="submit" className="w-max">
+                                Upload
+                            </Button>
+
+                            {form.watch("files") && form.watch("files").length > 0 && (
+                                <div className="mt-4 text-sm text-accent">
+                                    <strong>Selected files:</strong>
+                                    <ul className="list-inside list-disc">
+                                        {Array.from(form.watch("files")).map((file, idx) => (
+                                            <li key={idx}>
+                                                {file.name} ({file.size} bytes)
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </form>
+                    </Form>
+                </div>
+            </div>
+        </div>
+    );
 }
