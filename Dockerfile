@@ -6,7 +6,10 @@ COPY frontend/package.json frontend/yarn.lock ./
 RUN corepack enable && yarn install --immutable
 
 COPY frontend/ ./
-RUN yarn build
+
+COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
+RUN ./entrypoint.sh 
 
 
 
@@ -21,7 +24,7 @@ COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
 COPY backend/ ./
-RUN go build -o server cmd/server/main.go
+RUN go build -o server main.go
 
 
 
@@ -31,8 +34,9 @@ RUN apk add --no-cache bash
 
 WORKDIR /app/backend
 
+COPY --from=backend-build /app/backend/ ./
 COPY --from=frontend-build /app/frontend/dist ../frontend/dist
 
 EXPOSE 8080
 
-CMD ["air", "-c", ".air.toml"]
+CMD ["./server"]

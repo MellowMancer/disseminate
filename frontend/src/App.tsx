@@ -1,6 +1,4 @@
-import React from "react";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import { SchedulerPage } from "./pages/SchedulerPage";
 import "./App.css";

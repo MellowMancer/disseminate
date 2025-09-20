@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import type { FormDataState } from '@/types/forms';
-import splatImage from '@/assets/splat_poster.png';
-import ss from '@/assets/ss.png';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TwitterTab } from '@/components/forms/TwitterTab';
 import { YouTubeTab } from '@/components/forms/YoutubeTab';
-import { InputWithLabel } from '@/components/ui/inputWithLabel';
 import { useLocation } from 'react-router-dom';
 import {
     Carousel,

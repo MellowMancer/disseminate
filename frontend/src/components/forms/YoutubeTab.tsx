@@ -1,8 +1,7 @@
-import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import type { FormDataState, TabComponentProps } from '@/types/forms';
+import type { TabComponentProps } from '@/types/forms';
 
 // This component can be used for both Video and Short tabs
 export function YouTubeTab({ data, handleChange, platform }: TabComponentProps<'youtubeVideo' | 'youtubeShort'> & { platform: 'youtubeVideo' | 'youtubeShort' }) {
