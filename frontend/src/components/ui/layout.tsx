@@ -11,7 +11,7 @@ const Layout: React.FC = () => {
   const handleLogout = () => {
     fetch("/auth/logout", { method: "POST", credentials: "include" }).then(() => {
       setAuthenticated(false);
-      navigate("/auth/login");
+      navigate("/login");
     });
   };
 

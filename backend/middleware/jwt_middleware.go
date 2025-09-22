@@ -1,37 +1,45 @@
 package middleware
 
 import (
+    "log"
     "net/http"
 
-    "github.com/labstack/echo/v4"
     "github.com/golang-jwt/jwt/v5"
+    "github.com/labstack/echo/v4"
 )
 
+// JWTMiddleware verifies JWT from cookie and redirects unauthenticated users to login
 func JWTMiddleware(secret []byte) echo.MiddlewareFunc {
     return func(next echo.HandlerFunc) echo.HandlerFunc {
         return func(c echo.Context) error {
             cookie, err := c.Cookie("jwt_token")
             if err != nil {
+                log.Println("JWTMiddleware: no cookie found, redirecting to /login")
                 return c.Redirect(http.StatusSeeOther, "/login")
             }
-            tokenString := cookie.Value
 
+            tokenString := cookie.Value
             token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
                 if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
                     return nil, echo.NewHTTPError(http.StatusUnauthorized, "Unexpected signing method")
                 }
                 return secret, nil
             })
-
-            if err != nil || !token.Valid {
+            if err != nil {
+                log.Printf("JWTMiddleware: token parse error: %v", err)
                 return c.Redirect(http.StatusSeeOther, "/login")
             }
+            if !token.Valid {
+                log.Println("JWTMiddleware: invalid token, redirecting to /login")
+                return c.Redirect(http.StatusSeeOther, "/login")
+            }
+
             return next(c)
         }
     }
 }
 
-
+// RedirectIfAuthenticated redirects authenticated users away from login/signup pages
 func RedirectIfAuthenticated(secret []byte) echo.MiddlewareFunc {
     return func(next echo.HandlerFunc) echo.HandlerFunc {
         return func(c echo.Context) error {
@@ -44,8 +52,8 @@ func RedirectIfAuthenticated(secret []byte) echo.MiddlewareFunc {
                     }
                     return secret, nil
                 })
-
                 if err == nil && token.Valid {
+                    log.Println("RedirectIfAuthenticated: user authenticated, redirecting to /")
                     return c.Redirect(http.StatusSeeOther, "/")
                 }
             }

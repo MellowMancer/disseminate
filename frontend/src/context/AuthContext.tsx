@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .then(res => res.json())
       .then(data => setAuthenticated(data.authenticated))
       .catch(() => setAuthenticated(false));
-  }, []);
+  }, [authenticated]);
 
   return (
     <AuthContext.Provider value={{ authenticated, setAuthenticated }}>

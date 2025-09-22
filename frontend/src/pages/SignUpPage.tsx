@@ -38,7 +38,6 @@ export default function SignUpPage() {
             });
 
             if (response.ok) {
-                alert(`Signup Successful`);
                 navigate("/login")
             } else {
                 const errData = await response.json();

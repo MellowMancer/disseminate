@@ -10,7 +10,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 type LoginFormValues = {
   email: string;
@@ -18,7 +19,10 @@ type LoginFormValues = {
 };
 
 export default function LoginPage() {
+  const { authenticated: _, setAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || "/";
 
   const form = useForm<LoginFormValues>({
     mode: "onChange",
@@ -38,9 +42,8 @@ export default function LoginPage() {
       });
 
       if (response.ok) {
-        const respData = await response.json();
-        alert(`Login Successful: ${respData}`);
-        navigate("/")
+        setAuthenticated(true);
+        navigate(from, { replace: true });
       } else {
         const errData = await response.json();
         alert(`Login failed: ${errData.message}`);
