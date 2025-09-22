@@ -1,15 +1,17 @@
 package routes
 
 import (
-    "github.com/labstack/echo/v4"
-    "backend/handlers"
+	"backend/handlers"
 	"backend/services"
+	"github.com/labstack/echo/v4"
 )
 
-func RegisterAuthRoutes(e *echo.Group, userService services.UserService) {
+func RegisterAuthRoutes(e *echo.Echo, userService services.UserService) {
 	h := handlers.NewHandler(userService)
+	authGroup := e.Group("/auth")
 
-    e.POST("/login", h.Login)
-    e.POST("/signup", h.SignUp)
-	e.POST("/logout", h.Logout)
+	authGroup.POST("/login", h.Login)
+	authGroup.POST("/signup", h.SignUp)
+	authGroup.POST("/logout", h.Logout)
+    authGroup.GET("/status", h.AuthStatus)
 }
