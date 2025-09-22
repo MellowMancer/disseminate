@@ -1,70 +1,143 @@
 package services
 
-import ("encoding/json"
-    "net/http"
+import (
+	"backend/models"
+	"bytes"
+	"encoding/json"
 	"fmt"
-    "bytes"
-    "backend/models"
-	)
+	"io"
+	"net/http"
+	"net/url"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
+)
 
 type UserService interface {
-    CreateUser(user *models.User) error
+	CreateUser(user *models.User) error
+	LoginUser(user *models.User) (string, error)
+	GetJWTSecret() []byte
 }
 
 type userServiceImpl struct {
-    supabaseURL   string
-    supabaseKey   string
-    httpClient    *http.Client
+	supabaseURL string
+	supabaseKey string
+	jwtSecret   []byte
+	httpClient  *http.Client
 }
 
-func NewUserService(url, key string) UserService {
-    return &userServiceImpl{
-        supabaseURL: url,
-        supabaseKey: key,
-        httpClient:  &http.Client{},
-    }
+func NewUserService(url, key string, jwtSecret []byte) UserService {
+	return &userServiceImpl{
+		supabaseURL: url,
+		supabaseKey: key,
+		jwtSecret:   []byte(jwtSecret),
+		httpClient:  &http.Client{},
+	}
 }
 
 func (s *userServiceImpl) CreateUser(user *models.User) error {
 	exists, err := s.UserExists(user.Email)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("user already exists")
+	}
+
+	payloadBytes, err := json.Marshal(user)
     if err != nil {
-        return err
-    }
-    if exists {
-        return fmt.Errorf("user already exists")
+        return fmt.Errorf("error marshalling user: %w", err)
     }
 
+    url := s.supabaseURL + "/rest/v1/profiles"
+    req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
+    if err != nil {
+        return fmt.Errorf("failed to create request: %w", err)
+    }
 
-    payloadBytes, _ := json.Marshal(user)
-
-    req, _ := http.NewRequest("POST", s.supabaseURL+"/users", bytes.NewBuffer(payloadBytes))
     req.Header.Set("apikey", s.supabaseKey)
     req.Header.Set("Authorization", "Bearer "+s.supabaseKey)
     req.Header.Set("Content-Type", "application/json")
     req.Header.Set("Prefer", "return=representation")
 
-    resp, err := s.httpClient.Do(req)
-    if err != nil || resp.StatusCode != 201 {
-        return err
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return fmt.Errorf("request error: %w", err)
     }
     defer resp.Body.Close()
+
+    bodyBytes, _ := io.ReadAll(resp.Body)
+    if resp.StatusCode != http.StatusCreated {
+        return fmt.Errorf("signup failed. Status: %d, Response: %s", resp.StatusCode, string(bodyBytes))
+    }
     return nil
 }
 
-
-func (s *userServiceImpl) UserExists(email string) (bool, error) {
-    req, _ := http.NewRequest("GET", s.supabaseURL+"/users?email=eq."+email, nil)
+func (s *userServiceImpl) LoginUser(user *models.User) (string, error) {
+	url := s.supabaseURL + "/rest/v1/profiles?email=eq." + url.QueryEscape(user.Email)
+    req, err := http.NewRequest("GET", url, nil)
+    if err != nil {
+        return "", err
+    }
     req.Header.Set("apikey", s.supabaseKey)
     req.Header.Set("Authorization", "Bearer "+s.supabaseKey)
 
-    resp, err := s.httpClient.Do(req)
+    resp, err := http.DefaultClient.Do(req)
     if err != nil {
-        return false, err
+        return "", err
     }
     defer resp.Body.Close()
 
-    var users []models.User
-    json.NewDecoder(resp.Body).Decode(&users)
+    if resp.StatusCode != http.StatusOK {
+        body, _ := io.ReadAll(resp.Body)
+        return "", fmt.Errorf("login failed, status: %d, response: %s", resp.StatusCode, string(body))
+    }
 
-    return len(users) > 0, nil
+    var users []models.User
+    if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
+        return "", err
+    }
+    if len(users) == 0 {
+        return "", fmt.Errorf("user not found")
+    }
+
+    err = bcrypt.CompareHashAndPassword([]byte(users[0].Password), []byte(user.Password))
+    if err != nil {
+        return "", fmt.Errorf("invalid password")
+    }
+
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+        "sub": users[0].Email,
+        "exp": time.Now().Add(72 * time.Hour).Unix(),
+    })
+
+    tokenString, err := token.SignedString([]byte(s.jwtSecret))
+    if err != nil {
+        return "", err
+    }
+
+    return tokenString, nil
+}
+
+func (s *userServiceImpl) UserExists(email string) (bool, error) {
+	req, _ := http.NewRequest("GET", s.supabaseURL+"/rest/v1/profiles?email=eq."+email, nil)
+	req.Header.Set("apikey", s.supabaseKey)
+	req.Header.Set("Authorization", "Bearer "+s.supabaseKey)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	var users []models.User
+	json.NewDecoder(resp.Body).Decode(&users)
+
+	return len(users) > 0, nil
+}
+
+func (s *userServiceImpl) GetJWTSecret() []byte{
+	return s.jwtSecret
 }
