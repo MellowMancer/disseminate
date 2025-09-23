@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from '@/components/ui/button';
+import { DialogTrigger, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import  { ImageCropDialog }  from "@/pages/schedule/edit_image/ImageCropDialog";
 
 type MediaItemType = {
+    id: string,
     type: "image" | "video";
     src: string;
-};
+  };
 
 type Dimensions = {
     width: number;
@@ -30,6 +33,8 @@ const Carousel: React.FC<CarouselProps> = ({
     const [dimensions, setDimensions] = useState<(Dimensions | null)[]>(mediaItems.map(() => null));
     const [containerHeight, setContainerHeight] = useState<number>(fixedHeight);
     const border = " bg-card border-card-outline border-1 border-t-24 rounded-md shadow-(--shadow-override) md:shadow-(--shadow-override-md) lg:shadow-(--shadow-override-lg)";
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [mediaList, setMediaList] = useState<MediaItemType[]>(mediaItems);
 
     // Transition wrapping for slide changes
     const changeSlide = (newIndex: number) => {
@@ -113,46 +118,71 @@ const Carousel: React.FC<CarouselProps> = ({
         return <div className="text-center text-gray-500">No media available</div>;
     }
 
+    const handleCropComplete = (croppedSrc: string) => {
+        if (editingIndex === null) return;
+        const updatedMedia = [...mediaList];
+        updatedMedia[editingIndex] = { ...updatedMedia[editingIndex], src: croppedSrc };
+        setMediaList(updatedMedia);
+        setEditingIndex(null); // close dialog
+    };
+
+
     return (
         <div className={className + "duration-500 ease-in-out"}>
             <div
                 className="mx-auto rounded-md relative overscroll-contain touch-none flex"
                 style={{ maxWidth: maxWidthThreshold, height: containerHeight }}
             >
-                {mediaItems.map((item, idx) => (
+                {mediaList.map((item, idx) => (
                     <div
                         key={idx}
-                        // Use opacity and pointer events for fade transition
+                        className="flex justify-center items-center h-full w-full"
                         style={{
                             transition: `opacity ${transitionDuration}ms ease`,
                             opacity: idx === currentIndex && !transitioning ? 1 : 0,
                             position: idx === currentIndex ? "relative" : "absolute",
-                            width: "100%",
-                            height: "100%",
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
                             pointerEvents: idx === currentIndex ? "auto" : "none",
                         }}
                     >
-                        {item.type === "image" ? (
-                            <img
-                                src={item.src}
-                                alt=""
-                                className={"h-full w-auto object-contain mx-auto" + border}
-                            />
-                        ) : (
-                            <video
-                                src={item.src}
-                                controls
-                                className={"h-full w-auto object-contain mx-auto" + border}
-                            />
+                        <DialogTrigger className="w-full h-full">
+                            
+                            {item.type === "image" ? (
+                                <img
+                                    src={item.src}
+                                    alt=""
+                                    className={"h-full w-auto object-contain mx-auto" + border}
+                                    onClick={() => setEditingIndex(idx)}
+                                    style={{ cursor: "pointer" }}
+                                />
+                            ) : (
+                                <video
+                                    src={item.src}
+
+                                    className={"h-full w-auto object-contain mx-auto" + border}
+                                />
+                            )}
+                            
+                        </DialogTrigger>
+                        {editingIndex === idx && item.type === "image" && (
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Edit Image</DialogTitle>
+                                    <DialogDescription>
+                                        {/* Place your cropping component here */}
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <ImageCropDialog
+                                    src={mediaList[idx].src}
+                                    onClose={() => setEditingIndex(null)}
+                                    onCropComplete={handleCropComplete}
+                                />
+                            </DialogContent>
                         )}
                     </div>
                 ))}
             </div>
 
-            <div className="relative mt-4 px-2 z-100 max-w-[550px] mx-auto">
+            <div className="relative mt-4 px-2 z-1 max-w-[550px] mx-auto">
                 <div className="absolute left-0 space-x-2">
                     <Button onClick={prev}>Prev</Button>
                     <Button onClick={next}>Next</Button>
@@ -163,7 +193,7 @@ const Carousel: React.FC<CarouselProps> = ({
             </div>
 
 
-        </div>
+        </div >
     );
 };
 
