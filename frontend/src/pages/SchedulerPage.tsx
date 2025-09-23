@@ -7,16 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TwitterTab } from '@/components/forms/TwitterTab';
 import { YouTubeTab } from '@/components/forms/YoutubeTab';
 import { useLocation } from 'react-router-dom';
-import {
-    Carousel,
-    CarouselContent,
-    CarouselItem,
-    CarouselNext,
-    CarouselPrevious,
-    CarouselDots
-} from "@/components/ui/carousel"
-import Fade from 'embla-carousel-fade'; 
-
+import Carousel from "@/components/ui/carousel";
 
 // type FormDataState = {
 //   importData: {}; // TODO: Stricter Restrictions
@@ -46,7 +37,18 @@ const initialFormData: FormDataState = {
 export function SchedulerPage() {
     const [formData, setFormData] = useState<FormDataState>(initialFormData);
     const location = useLocation();
+    // const [api, setApi] = React.useState<CarouselApi>()
     const files = location.state?.files as FileList;
+
+    type MediaItemType = {
+        type: "image" | "video";
+        src: string;
+    };
+
+    const mediaItems: MediaItemType[] = Array.from(files).map((file) => ({
+        type: file.type.startsWith("video") ? "video" : "image", // explicitly typed
+        src: URL.createObjectURL(file),
+    }));
 
     const handleChange = <P extends keyof FormDataState>(
         platform: P,
@@ -61,19 +63,6 @@ export function SchedulerPage() {
         }));
     };
 
-    const handleExportKeys = () => {
-        const keysToExport = { twitter: { apiKey: formData.twitter.apiKey, /*...*/ } };
-        const jsonString = JSON.stringify(keysToExport, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'disseminate-keys.json';
-        link.click();
-        URL.revokeObjectURL(url);
-        toast.success('Developer keys exported successfully!');
-    };
-
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
         console.log('Form Submitted:', formData);
@@ -81,16 +70,12 @@ export function SchedulerPage() {
     };
 
     return (
-        <div className="min-h-screen w-screen grid grid-cols-1 lg:grid-cols-10 gap-10 lg:gap-5 bg-background py-16 px-8 lg:py-8 lg:px-12 text-white overflow-y-scroll">
-            <div className="lg:col-span-6 w-full lg:px-8 relative place-self-center">
-                <Card className="bg-card text-slate-800">
+        <div className='w-full h-full grid place-items-center'>
+            <div className="grid grid-cols-11 grid-rows-min gap-y-8 md:gap-x-8 w-full h-full content-center">
+                <Card className="col-span-11 md:col-span-6 h-min ">
                     <CardHeader>
                         <CardTitle>Create a New Post</CardTitle>
                         <CardDescription>Fill out the details for each platform you want to post to.</CardDescription>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 z-10">
-                            <Button variant="outline" onClick={handleExportKeys}>Import Keys</Button>
-                            <Button variant="outline" onClick={handleExportKeys}>Export Keys</Button>
-                        </div>
                     </CardHeader>
 
                     <CardContent>
@@ -131,40 +116,9 @@ export function SchedulerPage() {
                         </form>
                     </CardContent>
                 </Card>
-            </div>
-            <div className='lg:col-span-4 max-h-screen flex justify-center'>
-                <Carousel opts={{
-                    loop: true,
-                }} plugins={[Fade()]}
-                    className="w-3/4 place-self-center overscroll-contain">
-                    <CarouselContent>
-                        {Array.from(files).map((file, index) => {
-                            const url = URL.createObjectURL(file);
-                            if (file.type.startsWith("image")) {
-                                return (
-                                    <CarouselItem key={index}>
-                                        <div className='flex aspect-square items-center justify-center p-2' >
-                                                <img className="rounded-sm border-1 border-t-24 shadow-(--shadow-override) border-card-outline" src={url} alt={file.name} style={{ maxWidth: '100%', maxHeight: '100%' }} />
-                                        </div>
-                                    </CarouselItem>
-                                );
-                            } else if (file.type.startsWith("video")) {
-                                return (
-                                    <CarouselItem key={index}>
-                                        <div className='flex aspect-square items-center justify-center p-2' >
-                                                <video className="rounded-sm border-1 border-t-24 shadow-(--shadow-override) border-card-outline" src={url} controls style={{ maxWidth: '100%', maxHeight: '100%' }} />
-                                        </div>
-                                    </CarouselItem>
-                                );
-                            }
-                            return null;
-                        })}
-                    </CarouselContent>
-
-                    <CarouselPrevious />
-                    <CarouselNext />
-                    <CarouselDots/>
-                </Carousel>
+                <div className='col-span-11 md:col-span-5 place-self-center w-full'>
+                <Carousel mediaItems={mediaItems} />
+                </div>
             </div>
         </div>
     );

@@ -9,8 +9,6 @@ export function TwitterTab({ data, handleChange }: TabComponentProps<'twitter'>)
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <InputWithLabel type='text' label='API Key' value={data.apiKey} onChange={handleChange('twitter', 'apiKey')} />
         <InputWithLabel type='text' label='API Secret Key' value={data.apiSecret} onChange={handleChange('twitter', 'apiSecret')} />
-        <InputWithLabel type='text' label='API Secret Key' value={data.accessToken} onChange={handleChange('twitter', 'accessToken')} />
-        <InputWithLabel type='text' label='API Secret Key' value={data.accessSecret} onChange={handleChange('twitter', 'accessSecret')} />
         </div>
       <div><Label>Tweet Content</Label><Textarea value={data.content} onChange={handleChange('twitter', 'content')} /></div>
     </div>
