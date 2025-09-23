@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import './assets/fonts.css';
+@import './App.css';
 
 @theme {
     --color-highlight: #292C3C;
@@ -16,13 +17,9 @@
     --color-button: #292C3C;
     --color-button-text: #E6EBFE;
 
-    --shadow-override-lg: 30px 30px 0px 0px #282055;
-    --shadow-override-md: 22px 22px 0px 0px #282055;
-    --shadow-override: 15px 15px 0px 0px #282055;
+    --shadow-override-lg: 24px 24px 0px 0px #282055;
+    --shadow-override-md: 16px 16px 0px 0px #282055;
+    --shadow-override: 9px 9px 0px 0px #282055;
 
     --firas: "Fira Sans", sans-serif;
-}
-
-body{
-   
 }
