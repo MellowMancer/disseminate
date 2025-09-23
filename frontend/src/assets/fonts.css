@@ -2,77 +2,77 @@
 
 @font-face {
   font-family: 'Fira Sans';
-  src: url('/Fira Sans/FiraSans-Thin.ttf') format('truetype');
+  src: url('@/assets/Fira Sans/FiraSans-Thin.ttf') format('truetype');
   font-weight: 100;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'Fira Sans';
-  src: url('/Fira Sans/FiraSans-ThinItalic.ttf') format('truetype');
+  src: url('@/assets/Fira Sans/FiraSans-ThinItalic.ttf') format('truetype');
   font-weight: 100;
   font-style: italic;
 }
 
 @font-face {
   font-family: 'Fira Sans';
-  src: url('/Fira Sans/FiraSans-Regular.ttf') format('truetype');
+  src: url('@/assets/Fira Sans/FiraSans-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'Fira Sans';
-  src: url('/Fira Sans/FiraSans-Medium.ttf') format('truetype');
+  src: url('@/assets/Fira Sans/FiraSans-Medium.ttf') format('truetype');
   font-weight: 500;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'Fira Sans';
-  src: url('/Fira Sans/FiraSans-SemiBold.ttf') format('truetype');
+  src: url('@/assets/Fira Sans/FiraSans-SemiBold.ttf') format('truetype');
   font-weight: 600;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'Fira Sans';
-  src: url('/Fira Sans/FiraSans-SemiBoldItalic.ttf') format('truetype');
+  src: url('@/assets/Fira Sans/FiraSans-SemiBoldItalic.ttf') format('truetype');
   font-weight: 600;
   font-style: italic;
 }
 
 @font-face {
   font-family: 'Fira Sans';
-  src: url('/Fira Sans/FiraSans-MediumItalic.ttf') format('truetype');
+  src: url('@/assets/Fira Sans/FiraSans-MediumItalic.ttf') format('truetype');
   font-weight: 500;
   font-style: italic;
 }
 
 @font-face {
   font-family: 'Fira Sans';
-  src: url('/Fira Sans/FiraSans-Italic.ttf') format('truetype');
+  src: url('@/assets/Fira Sans/FiraSans-Italic.ttf') format('truetype');
   font-weight: 400;
   font-style: italic;
 }
 
 @font-face {
   font-family: 'Fira Sans';
-  src: url('/Fira Sans/FiraSans-ExtraBold.ttf') format('truetype');
+  src: url('@/assets/Fira Sans/FiraSans-ExtraBold.ttf') format('truetype');
   font-weight: 800;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'Fira Sans';
-  src: url('/Fira Sans/FiraSans-Black.ttf') format('truetype');
+  src: url('@/assets/Fira Sans/FiraSans-Black.ttf') format('truetype');
   font-weight: 900;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'Fira Sans';
-  src: url('/Fira Sans/FiraSans-Bold.ttf') format('truetype');
+  src: url('@/assets/Fira Sans/FiraSans-Bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
 }
