@@ -34,8 +34,7 @@ export default function HomePage() {
     };
 
     return (
-        <>
-            <div className="min-h-screen w-screen flex flex-col md:flex-row bg-background py-16 px-8 md:py-8 md:px-24 mx-auto text-white">
+            <div className="flex flex-col md:flex-row w-full h-full">
                 {/* Left half */}
                 <div className="md:w-1/2 flex flex-col justify-center pr-8 md:pr-16 mb-16 md:mb-0">
                     <h1 className="text-3xl md:text-5xl font-semibold mb-2 md:mb-6 text-highlight">Disseminate</h1>
@@ -46,7 +45,6 @@ export default function HomePage() {
                     <nav className="space-x-4">
                         <Button
                             onClick={handleStartPostingClick}
-                            className=" bg-button text-button-text hover:bg-button/60 transition"
                         >
                             Start Posting
                         </Button>
@@ -105,8 +103,8 @@ export default function HomePage() {
                                     <div className="mt-4 text-sm text-secondary-text">
                                         <strong>Selected files:</strong>
                                         <ul className="list-inside list-disc">
-                                            {Array.from(form.watch("files")).map((file, idx) => (
-                                                <li key={idx}>
+                                            {Array.from(form.watch("files")).map((file) => (
+                                                <li key={file.name}>
                                                     {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
                                                 </li>
                                             ))}
@@ -122,6 +120,5 @@ export default function HomePage() {
                     </Card>
                 </div>
             </div>
-        </>
     );
 }

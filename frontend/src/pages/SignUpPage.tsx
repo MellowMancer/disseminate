@@ -49,7 +49,7 @@ export default function SignUpPage() {
     };
 
     return (
-        <div className="min-h-screen w-screen grid place-items-center bg-background py-16 px-8 md:py-8 md:px-24 mx-auto">
+        <div className="w-full h-full grid place-items-center">
             <Card className="h-min">
                 <CardHeader>
                     <CardTitle>Create a Disseminate account</CardTitle>
@@ -119,7 +119,7 @@ export default function SignUpPage() {
                 </Form>
                 <p className="mt-2 text-center text-gray-600 text-sm space-y-1">
                     <span>
-                        Already have an account?
+                        Already have an account?{" "}
                         <button
                             onClick={() => navigate("/login")}
                             className="font-semibold text-gray-900 hover:underline focus:outline-none"

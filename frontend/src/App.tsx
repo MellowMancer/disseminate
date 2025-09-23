@@ -13,18 +13,8 @@ function App() {
     <Routes>
       <Route element={<Layout />}>
 
-        <Route
-          path="/"
-          element={
-              <HomePage />
-          }
-        />
-        <Route
-          path="/schedule"
-          element={
-              <SchedulerPage />
-          }
-        />
+        <Route path="/" element={<HomePage />}/>
+        <Route path="/schedule" element={ <SchedulerPage />}/>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
 

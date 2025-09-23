@@ -98,8 +98,8 @@ func (h *Handler) AuthStatus(c echo.Context) error {
         if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
             return nil, echo.ErrUnauthorized
         }
-        jwt_secret := h.UserService.GetJWTSecret()
-        return jwt_secret, nil 
+        jwtSecret := h.UserService.GetJWTSecret()
+        return jwtSecret, nil 
     })
     if err != nil || !token.Valid {
         return c.JSON(http.StatusOK, map[string]any{"authenticated": false})

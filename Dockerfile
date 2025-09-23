@@ -8,15 +8,15 @@ RUN corepack enable && yarn install --immutable
 COPY frontend/ ./
 
 COPY entrypoint.sh ./
-RUN chmod +x entrypoint.sh
-RUN ./entrypoint.sh 
+RUN chmod +x entrypoint.sh &&\
+    ./entrypoint.sh 
 
 
 
 FROM golang:1.25-alpine AS backend-build
 
-RUN apk add --no-cache git bash
-RUN go install github.com/air-verse/air@latest
+RUN apk add --no-cache git bash &&\
+    go install github.com/air-verse/air@latest
 
 WORKDIR /app/backend
 

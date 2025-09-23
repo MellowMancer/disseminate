@@ -13,6 +13,7 @@ import (
 )
 
 func main() {
+	frontend_path := "../frontend/dist/index.html"
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -31,11 +32,11 @@ func main() {
 	authGroup.Use(middleware.RedirectIfAuthenticated(jwtSecret))
 
 	e.GET("/login", func(c echo.Context) error {
-		return c.File("../frontend/dist/index.html")
+		return c.File(frontend_path)
 	}, middleware.RedirectIfAuthenticated(jwtSecret))
 
 	e.GET("/signup", func(c echo.Context) error {
-		return c.File("../frontend/dist/index.html")
+		return c.File(frontend_path)
 	}, middleware.RedirectIfAuthenticated(jwtSecret))
 
 	protectedGroup := e.Group("")
@@ -48,7 +49,7 @@ func main() {
 	e.Static("/favicon.ico", "../frontend/dist/favicon.ico")
 	e.Static("/vite.svg", "../frontend/dist/vite.svg")
 
-	e.File("/", "../frontend/dist/index.html")
+	e.File("/", frontend_path)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

@@ -8,6 +8,7 @@ import (
     "github.com/labstack/echo/v4"
 )
 
+const login_path = "/login"
 // JWTMiddleware verifies JWT from cookie and redirects unauthenticated users to login
 func JWTMiddleware(secret []byte) echo.MiddlewareFunc {
     return func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -15,7 +16,7 @@ func JWTMiddleware(secret []byte) echo.MiddlewareFunc {
             cookie, err := c.Cookie("jwt_token")
             if err != nil {
                 log.Println("JWTMiddleware: no cookie found, redirecting to /login")
-                return c.Redirect(http.StatusSeeOther, "/login")
+                return c.Redirect(http.StatusSeeOther, login_path)
             }
 
             tokenString := cookie.Value
@@ -27,11 +28,11 @@ func JWTMiddleware(secret []byte) echo.MiddlewareFunc {
             })
             if err != nil {
                 log.Printf("JWTMiddleware: token parse error: %v", err)
-                return c.Redirect(http.StatusSeeOther, "/login")
+                return c.Redirect(http.StatusSeeOther, login_path)
             }
             if !token.Valid {
                 log.Println("JWTMiddleware: invalid token, redirecting to /login")
-                return c.Redirect(http.StatusSeeOther, "/login")
+                return c.Redirect(http.StatusSeeOther, login_path)
             }
 
             return next(c)

@@ -54,7 +54,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-screen grid place-items-center bg-background py-16 px-8 md:py-8 md:px-24 mx-auto">
+    <div className="w-full h-full grid place-items-center">
       <Card className="h-min">
         <CardHeader>
           <CardTitle>Log in to Disseminate</CardTitle>
@@ -105,7 +105,7 @@ export default function LoginPage() {
         </Form>
         <p className="mt-2 text-center text-gray-600 text-sm space-y-1">
           <span>
-            Don't have an account?
+            Don't have an account?{" "}
             <button
               onClick={() => navigate("/signup")}
               className="font-semibold text-gray-900 hover:underline focus:outline-none"
@@ -125,6 +125,6 @@ export default function LoginPage() {
           </div>
         </p>
       </Card>
-    </div>
+    </div >
   );
 }
