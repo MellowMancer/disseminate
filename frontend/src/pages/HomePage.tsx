@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { DynamicShadowWrapper } from "@/components/ui/dynamicShadowWrapper";
 
 type FormValues = {
     files: FileList;
@@ -34,29 +35,30 @@ export default function HomePage() {
     };
 
     return (
-            <div className="flex flex-col md:flex-row w-full h-full">
-                {/* Left half */}
-                <div className="md:w-1/2 flex flex-col justify-center pr-8 md:pr-16 mb-16 md:mb-0">
-                    <h1 className="text-3xl md:text-5xl font-semibold mb-2 md:mb-6 text-highlight">Disseminate</h1>
-                    <p className="text-l md:text-xl text-secondary-text mb-8">
-                        Post to multiple social media platforms from a single dashboard.
-                        Supports Bluesky, Twitter, Instagram, Youtube, Mastodon, Artstation, Reddit
-                    </p>
-                    <nav className="space-x-4">
-                        <Button
-                            onClick={handleStartPostingClick}
-                        >
-                            Start Posting
-                        </Button>
-                    </nav>
-                </div>
+        <div className="flex flex-col md:flex-row w-full h-full">
+            {/* Left half */}
+            <div className="md:w-1/2 flex flex-col justify-center pr-8 md:pr-16 mb-16 md:mb-0">
+                <h1 className="text-3xl md:text-5xl font-semibold mb-2 md:mb-6 text-highlight">Disseminate</h1>
+                <p className="text-l md:text-xl text-secondary-text mb-8">
+                    Post to multiple social media platforms from a single dashboard.
+                    Supports Bluesky, Twitter, Instagram, Youtube, Mastodon, Artstation, Reddit
+                </p>
+                <nav className="space-x-4">
+                    <Button
+                        onClick={handleStartPostingClick}
+                    >
+                        Start Posting
+                    </Button>
+                </nav>
+            </div>
 
-                {/* Right half */}
-                <div className="md:w-1/2 flex flex-col justify-center text-gray-900">
-                    <Card className=" bg-card text-white">
+            {/* Right half */}
+            <div className="md:w-1/2 flex flex-col justify-center text-gray-900">
+                <DynamicShadowWrapper>
+                    <Card>
                         <CardHeader>
                             <CardTitle>Upload your content</CardTitle>
-</CardHeader>
+                        </CardHeader>
                         <Form {...form}>
                             <form
                                 onSubmit={form.handleSubmit(onSubmit)}
@@ -77,7 +79,7 @@ export default function HomePage() {
                                                 toast.error('A maximum of 12 inputs are supported');
                                                 return;
                                             }
-                                            
+
                                             field.onChange(files);
                                         };
                                         return (
@@ -118,7 +120,8 @@ export default function HomePage() {
                             </form>
                         </Form>
                     </Card>
-                </div>
+                </DynamicShadowWrapper>
             </div>
+        </div>
     );
 }

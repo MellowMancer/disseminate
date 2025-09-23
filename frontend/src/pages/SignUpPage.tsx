@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { DynamicShadowWrapper } from "@/components/ui/dynamicShadowWrapper";
 
 type SignUpFormValues = {
     email: string;
@@ -50,6 +51,7 @@ export default function SignUpPage() {
 
     return (
         <div className="w-full h-full grid place-items-center">
+            <DynamicShadowWrapper>
             <Card className="h-min">
                 <CardHeader>
                     <CardTitle>Create a Disseminate account</CardTitle>
@@ -139,6 +141,7 @@ export default function SignUpPage() {
                     </div>
                 </p>
             </Card>
+            </DynamicShadowWrapper>
         </div>
     );
 }
