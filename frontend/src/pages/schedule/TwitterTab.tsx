@@ -1,7 +1,7 @@
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { TabComponentProps } from '@/types/forms';
-import { InputWithLabel } from '../ui/inputWithLabel';
+import { InputWithLabel } from '@/components/ui/inputWithLabel';
 
 export function TwitterTab({ data, handleChange }: TabComponentProps<'twitter'>) {
   return (
