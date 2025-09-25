@@ -9,7 +9,7 @@ import { YouTubeTab } from '@/pages/schedule/YoutubeTab';
 import { useLocation } from 'react-router-dom';
 import Carousel from "@/components/ui/carousel";
 import { Dialog } from "@/components/ui/dialog";
-import { DynamicShadowWrapper } from "@/components/ui/dynamicShadowWrapper";
+import { DynamicShadowWrapper } from "@/components/ui/dynamic-shadow-wrapper";
 
 const initialFormData: FormDataState = {
   importData: {},

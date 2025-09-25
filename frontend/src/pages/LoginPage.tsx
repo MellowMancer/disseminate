@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { DynamicShadowWrapper } from "@/components/ui/dynamicShadowWrapper";
+import { DynamicShadowWrapper } from "@/components/ui/dynamic-shadow-wrapper";
 
 type LoginFormValues = {
   email: string;

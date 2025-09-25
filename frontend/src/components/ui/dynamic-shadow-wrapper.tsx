@@ -40,17 +40,15 @@ export function DynamicShadowWrapper({ children, className = '' }: DynamicShadow
             if (!ref.current) return;
 
             const rect = ref.current.getBoundingClientRect();
-            const lightSourceX = window.innerWidth / 2 - 160;
-            const lightSourceY = window.innerWidth / 2 - 450;
+
+            let lightSourceX = window.innerWidth / 2 - 120;
+            let lightSourceY = 0;
 
             const elementCenterX = rect.left + rect.width / 2;
             const elementCenterY = rect.top + rect.height / 2;
 
-            // Calculate offsets normalized and clamped to ±30px
-            // let offsetX = ((elementCenterX - lightSourceX) >= 0 ? 1 : -1) * 24;
-            // let offsetY = ((elementCenterY - lightSourceY) >= 0 ? 1 : -1) * 24;
-            let offsetX = ((elementCenterX - lightSourceX) / lightSourceX ) * 48;
-            let offsetY = ((elementCenterY - lightSourceY) / lightSourceY ) * 48;
+            let offsetX = ((elementCenterX - lightSourceX) / lightSourceX) * 24;
+            let offsetY = ((elementCenterY - lightSourceY) / lightSourceY) * 24;
             offsetX = Math.min(Math.max(offsetX, -24), 24)
             offsetY = Math.min(Math.max(offsetY, -24), 24)
             setShadowOffset({ x: offsetX * scaleFactor, y: offsetY * scaleFactor });
@@ -63,6 +61,7 @@ export function DynamicShadowWrapper({ children, className = '' }: DynamicShadow
         window.addEventListener('scroll', updateShadowPosition, true);
 
         return () => {
+            window.removeEventListener('mousemove', updateShadowPosition);
             window.removeEventListener('resize', updateShadowPosition);
             window.removeEventListener('scroll', updateShadowPosition, true);
         };

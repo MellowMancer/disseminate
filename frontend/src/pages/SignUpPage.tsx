@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { DynamicShadowWrapper } from "@/components/ui/dynamicShadowWrapper";
+import { DynamicShadowWrapper } from "@/components/ui/dynamic-shadow-wrapper";
 
 type SignUpFormValues = {
     email: string;

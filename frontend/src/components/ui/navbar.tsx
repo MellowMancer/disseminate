@@ -10,7 +10,7 @@ import {
     NavigationMenuList,
     navigationMenuTriggerStyle,
     NavigationMenuIndicator
-} from "@/components/ui/navigationMenu"
+} from "@/components/ui/navigation-menu"
 
 export function Navbar() {
     const { authenticated, setAuthenticated } = useAuth();
@@ -29,7 +29,7 @@ export function Navbar() {
     }
 
     const handleProfileButton = () => {
-
+        navigate("/Profile");
     }
 
     const handleHomeButton = () => {

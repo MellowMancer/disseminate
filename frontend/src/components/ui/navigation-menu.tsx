@@ -2,7 +2,7 @@ import * as React from "react"
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu"
 import { cva } from "class-variance-authority"
 import { ChevronDownIcon } from "lucide-react"
-import { DynamicShadowWrapper } from "./dynamicShadowWrapper"
+import { DynamicShadowWrapper } from "./dynamic-shadow-wrapper"
 import { cn } from "@/lib/utils"
 
 function NavigationMenu({
@@ -18,7 +18,7 @@ function NavigationMenu({
       data-slot="navigation-menu"
       data-viewport={viewport}
       className={cn(
-        "group/navigation-menu fixed top-6 md:top-4 z-1000",
+        "group/navigation-menu fixed top-6 md:top-4 z-50",
         className
       )}
       {...props}
