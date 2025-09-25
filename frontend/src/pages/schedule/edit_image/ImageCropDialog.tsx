@@ -23,6 +23,7 @@ export function ImageCropDialog({ src, onClose, onCropComplete }: ImageCropDialo
     const [scale] = useState(1)
     const [rotate] = useState(0)
     const [aspect, setAspect] = useState<number | undefined>(1 / 1)
+    const [cropping] = useState(false)
 
     const aspectOptions = [
         "Free",
@@ -37,14 +38,16 @@ export function ImageCropDialog({ src, onClose, onCropComplete }: ImageCropDialo
 
     const parseAspect = (input: string): number | undefined => {
         const match = input.match(/\((\d+)\s*\/\s*(\d+)\)/);
-        if (!match) return undefined;
+        if (!match) {
+            setAspect(undefined);
+            return;
+        }
         const [, a, b] = match;
         setAspect(Number(a) / Number(b));
         if (imgRef.current) {
             const { width, height } = imgRef.current
-            const newCrop = centerAspectCrop(width, height, Number (a) / Number (b))
+            const newCrop = centerAspectCrop(width, height, Number(a) / Number(b))
             setCrop(newCrop)
-            // Updates the preview
             setCompletedCrop(convertToPixelCrop(newCrop, width, height))
         }
         return;
@@ -103,16 +106,27 @@ export function ImageCropDialog({ src, onClose, onCropComplete }: ImageCropDialo
                 <div className="bg-opacity-50 flex justify-center items-center z-50">
                     <div className="max-w-lg w-full flex flex-col items-center">
                         {!!src && (
-                            <ReactCrop
-                                crop={crop}
-                                onChange={(_, percentCrop) => setCrop(percentCrop)}
-                                onComplete={(c) => setCompletedCrop(c)}
-                                aspect={aspect}
-                                minWidth={50}
-                                minHeight={50}
-                                ruleOfThirds
-                                className='max-h-76 max-w-76'
-                            >
+                            cropping ? (
+                                <ReactCrop
+                                    crop={crop}
+                                    onChange={(_, percentCrop) => setCrop(percentCrop)}
+                                    onComplete={(c) => setCompletedCrop(c)}
+                                    aspect={aspect}
+                                    minWidth={50}
+                                    minHeight={50}
+                                    ruleOfThirds
+                                    className='max-h-76 max-w-76'
+                                >
+                                    <img
+                                        ref={imgRef}
+                                        alt="Crop me"
+                                        src={src}
+                                        style={{ transform: `scale(${scale}) rotate(${rotate}deg)` }}
+                                        onLoad={onImageLoad}
+                                        className='max-h-76 max-w-76'
+                                    />
+                                </ReactCrop>
+                            ) : (
                                 <img
                                     ref={imgRef}
                                     alt="Crop me"
@@ -121,8 +135,9 @@ export function ImageCropDialog({ src, onClose, onCropComplete }: ImageCropDialo
                                     onLoad={onImageLoad}
                                     className='max-h-76 max-w-76'
                                 />
-                            </ReactCrop>
+                            )
                         )}
+
 
                         <div className="mt-4">
                             {completedCrop && (
@@ -144,7 +159,7 @@ export function ImageCropDialog({ src, onClose, onCropComplete }: ImageCropDialo
                     </div>
                 </div>
                 <div>
-                    <div>
+                    <div id='aspect-group'>
                         <Label className="mb-2">Aspect Ratio</Label>
                         <RadioGroup
                             className="grid grid-cols-2 gap-2"
