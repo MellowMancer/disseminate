@@ -46,30 +46,30 @@ export function Navbar() {
             <NavigationMenuList>
                 <NavigationMenuItem>
                     <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                        <div onClick={handleHomeButton} aria-label="Home">
+                        <div onClick={handleHomeButton} aria-label="Home" role="button">
                             Home
                         </div>
                     </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                     <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                        <div onClick={handleAboutButton} aria-label="About">
+                        <div onClick={handleAboutButton} aria-label="About" role="button">
                             About
                         </div>
                     </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                     <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                        <div onClick={handleProfileButton} aria-label="Profile">
+                        <div onClick={handleProfileButton} aria-label="Profile" role="button">
                             Profile & Keys
                         </div>
                     </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                     <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                        {authenticated ? (<div onClick={handleLogout} aria-label="Logout">
+                        {authenticated ? (<div onClick={handleLogout} aria-label="Logout" role="button">
                             Logout
-                        </div>) : (<div onClick={handleLoginButton} aria-label="Login">
+                        </div>) : (<div onClick={handleLoginButton} aria-label="Login" role="button">
                             Login
                         </div>)
                         }

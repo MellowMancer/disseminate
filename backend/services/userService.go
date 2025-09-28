@@ -15,6 +15,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const api_path = "/rest/v1/profiles?email=eq."
+
 type UserService interface {
 	CreateUser(user *models.User) error
 	LoginUser(user *models.User) (string, error)
@@ -53,7 +55,7 @@ func (s *userServiceImpl) CreateUser(user *models.User) error {
         return fmt.Errorf("error marshalling user: %w", err)
     }
 
-    url := s.supabaseURL + "/rest/v1/profiles"
+    url := s.supabaseURL + api_path
     req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
     if err != nil {
         return fmt.Errorf("failed to create request: %w", err)
@@ -79,7 +81,7 @@ func (s *userServiceImpl) CreateUser(user *models.User) error {
 }
 
 func (s *userServiceImpl) LoginUser(user *models.User) (string, error) {
-	url := s.supabaseURL + "/rest/v1/profiles?email=eq." + url.QueryEscape(user.Email)
+	url := s.supabaseURL + api_path + url.QueryEscape(user.Email)
     req, err := http.NewRequest("GET", url, nil)
     if err != nil {
         return "", err
@@ -126,7 +128,7 @@ func (s *userServiceImpl) LoginUser(user *models.User) (string, error) {
 }
 
 func (s *userServiceImpl) UserExists(email string) (bool, error) {
-	req, _ := http.NewRequest("GET", s.supabaseURL+"/rest/v1/profiles?email=eq."+email, nil)
+	req, _ := http.NewRequest("GET", s.supabaseURL + api_path + email, nil)
 	req.Header.Set("apikey", s.supabaseKey)
 	req.Header.Set("Authorization", "Bearer "+s.supabaseKey)
 
@@ -156,7 +158,7 @@ func (s *userServiceImpl) LinkTwitterAccount(email, accessToken, accessSecret st
         return err
     }
 
-    url := s.supabaseURL + "/rest/v1/profiles?email=eq." + url.QueryEscape(email)
+    url := s.supabaseURL + api_path + url.QueryEscape(email)
 
     req, err := http.NewRequest("PATCH", url, bytes.NewBuffer(payloadBytes))
     if err != nil {
@@ -183,7 +185,7 @@ func (s *userServiceImpl) LinkTwitterAccount(email, accessToken, accessSecret st
 }
 
 func (s *userServiceImpl) GetTwitterTokens(email string) (string, string, error) {
-    req, _ := http.NewRequest("GET", s.supabaseURL+"/rest/v1/profiles?email=eq."+email, nil)
+    req, _ := http.NewRequest("GET", s.supabaseURL + api_path + email, nil)
     req.Header.Set("apikey", s.supabaseKey)
     req.Header.Set("Authorization", "Bearer "+s.supabaseKey)
     resp, err := s.httpClient.Do(req)

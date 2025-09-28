@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+
 type Handler struct {
 	UserService services.UserService
 }

@@ -22,7 +22,7 @@ export function ImageCropDialog({ src, onClose, onCropComplete }: ImageCropDialo
     const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
     const [scale] = useState(1)
     const [rotate] = useState(0)
-    const [aspect, setAspect] = useState<number | undefined>(1 / 1)
+    const [aspect, setAspect] = useState<number | undefined>(1)
     const [cropping] = useState(false)
 
     const aspectOptions = [

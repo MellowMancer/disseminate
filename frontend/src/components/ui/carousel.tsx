@@ -58,7 +58,7 @@ const Carousel: React.FC<CarouselProps> = ({
 
     // Preload media intrinsic sizes
     useEffect(() => {
-        mediaItems.forEach((item, idx) => {
+        for(const [idx, item] of mediaItems.entries()) {
             if (item.type === "image") {
                 const img = new Image();
                 img.onload = () => {
@@ -80,7 +80,7 @@ const Carousel: React.FC<CarouselProps> = ({
                 };
                 video.src = item.src;
             }
-        });
+        };
     }, [mediaItems]);
 
     // Calculate scaling and adjust container height if needed
