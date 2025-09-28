@@ -4,11 +4,10 @@ import (
 	"errors"
 	"github.com/dghubble/oauth1"
 	"net/http"
-	"net/url"
 )
 
 type TwitterService interface {
-	GetAuthorizationURL() (*url.URL, string, string, error)
+	GetAuthorizationURL() (string, string, error)
 	GetAccessToken(oauthToken, requestSecret, oauthVerifier string) (string, string, error)
 	CheckTokensValid(accessToken, accessSecret string) (bool, error)
 }
@@ -23,20 +22,20 @@ func NewTwitterService(config *oauth1.Config) TwitterService {
 	}
 }
 
-func (s *twitterServiceImpl) GetAuthorizationURL() (*url.URL, string, string, error) {
+func (s *twitterServiceImpl) GetAuthorizationURL() (string, string, error) {
 	requestToken, requestSecret, err := s.twitterConfig.RequestToken()
 	if err != nil {
-		return nil, "", "", err
+		return "", "", err
 	}
 
 	_ = requestSecret // Store this secret for later use in the callback
 
 	authURL, err := s.twitterConfig.AuthorizationURL(requestToken)
 	if err != nil {
-		return nil, "", "", err
+		return "", "", err
 	}
 
-	return authURL, requestToken, requestSecret, nil
+	return authURL.String(), requestSecret, nil
 }
 
 func (s *twitterServiceImpl) GetAccessToken(oauthToken, requestSecret, oauthVerifier string) (string, string, error) {

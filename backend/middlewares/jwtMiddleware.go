@@ -3,7 +3,7 @@ package middlewares
 import (
 	"log"
 	"net/http"
-
+	"strings"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
@@ -11,9 +11,15 @@ import (
 const login_path = "/login"
 
 // JWTMiddleware verifies JWT from cookie and redirects unauthenticated users to login
-func JWTMiddleware(secret []byte) echo.MiddlewareFunc {
+func JWTMiddleware(secret []byte, excludedPaths []string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			path := c.Request().URL.Path
+            for _, exclude := range excludedPaths {
+                if strings.HasPrefix(path, exclude) {
+                    return next(c) // Skip JWT check for these paths
+                }
+            }
 			cookie, err := c.Cookie("jwt_token")
 			if err != nil {
 				log.Println("JWTMiddleware: no cookie found, redirecting to /login")

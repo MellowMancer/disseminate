@@ -22,6 +22,6 @@ func RegisterPageRoutes(e *echo.Group) {
 			return c.File("../frontend/dist/index.html")
 		}
 
-		return c.Redirect(http.StatusSeeOther, "/auth/login")
+		return c.Redirect(http.StatusSeeOther, "/login")
 	})
 }

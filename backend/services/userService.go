@@ -9,7 +9,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
-
+    _"log"
+    _"net/http/httputil"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -82,7 +83,8 @@ func (s *userServiceImpl) LoginUser(user *models.User) (string, error) {
     req, err := http.NewRequest("GET", url, nil)
     if err != nil {
         return "", err
-    }
+    }   
+
     req.Header.Set("apikey", s.supabaseKey)
     req.Header.Set("Authorization", "Bearer "+s.supabaseKey)
 
@@ -146,8 +148,8 @@ func (s *userServiceImpl) GetJWTSecret() []byte{
 
 func (s *userServiceImpl) LinkTwitterAccount(email, accessToken, accessSecret string) error {
 	payload := map[string]string{
-        "twitter_oauth_token":  accessToken,
-        "twitter_oauth_secret": accessSecret,
+        "twitter_access_token":  accessToken,
+        "twitter_access_secret": accessSecret,
     }
     payloadBytes, err := json.Marshal(payload)
     if err != nil {
@@ -166,14 +168,12 @@ func (s *userServiceImpl) LinkTwitterAccount(email, accessToken, accessSecret st
     req.Header.Set("Content-Type", "application/json")
     req.Header.Set("Prefer", "return=representation") 
 
-    // Send the request
     resp, err := s.httpClient.Do(req)
     if err != nil {
         return err
     }
     defer resp.Body.Close()
 
-    // Check for success status code
     if resp.StatusCode != http.StatusOK {
         body, _ := io.ReadAll(resp.Body)
         return fmt.Errorf("failed to update twitter tokens, status: %d, response: %s", resp.StatusCode, string(body))

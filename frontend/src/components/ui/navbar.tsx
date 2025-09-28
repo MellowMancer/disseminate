@@ -29,7 +29,7 @@ export function Navbar() {
     }
 
     const handleProfileButton = () => {
-        navigate("/Profile");
+        navigate("/profile");
     }
 
     const handleHomeButton = () => {
