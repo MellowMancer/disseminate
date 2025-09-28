@@ -1,13 +1,12 @@
 package routes
 
 import (
-	"backend/handlers"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
-func RegisterPageRoutes(e *echo.Group, userHandler *handlers.Handler) {
+func RegisterPageRoutes(e *echo.Group) {
 	e.GET("/*", func(c echo.Context) error {
 		path := c.Request().URL.Path
 
@@ -16,6 +15,7 @@ func RegisterPageRoutes(e *echo.Group, userHandler *handlers.Handler) {
 			"/login":    true,
 			"/signup":   true,
 			"/schedule": true,
+			"/profile":  true,
 		}
 
 		if _, ok := validFrontendRoutes[path]; ok {

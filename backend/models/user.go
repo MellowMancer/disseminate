@@ -1,10 +1,10 @@
 package models
 
-import (
-	
-)
+import ()
 
 type User struct {
-    Email    string `json:"email"`
-    Password string `json:"password"` // Store hashed password or use Supabase Auth
+	Email              string `json:"email"`
+	Password           string `json:"password"` // Store hashed password or use Supabase Auth
+	TwitterAccessToken  *string `json:"twitter_access_token"`
+	TwitterAccessSecret *string `json:"twitter_access_secret"`
 }

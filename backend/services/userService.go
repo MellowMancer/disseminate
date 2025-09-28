@@ -18,6 +18,8 @@ type UserService interface {
 	CreateUser(user *models.User) error
 	LoginUser(user *models.User) (string, error)
 	GetJWTSecret() []byte
+    LinkTwitterAccount(email, accessToken, accessSecret string) error
+    GetTwitterTokens(email string) (string, string, error)
 }
 
 type userServiceImpl struct {
@@ -140,4 +142,63 @@ func (s *userServiceImpl) UserExists(email string) (bool, error) {
 
 func (s *userServiceImpl) GetJWTSecret() []byte{
 	return s.jwtSecret
+}
+
+func (s *userServiceImpl) LinkTwitterAccount(email, accessToken, accessSecret string) error {
+	payload := map[string]string{
+        "twitter_oauth_token":  accessToken,
+        "twitter_oauth_secret": accessSecret,
+    }
+    payloadBytes, err := json.Marshal(payload)
+    if err != nil {
+        return err
+    }
+
+    url := s.supabaseURL + "/rest/v1/profiles?email=eq." + url.QueryEscape(email)
+
+    req, err := http.NewRequest("PATCH", url, bytes.NewBuffer(payloadBytes))
+    if err != nil {
+        return err
+    }
+
+    req.Header.Set("apikey", s.supabaseKey)
+    req.Header.Set("Authorization", "Bearer "+s.supabaseKey)
+    req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("Prefer", "return=representation") 
+
+    // Send the request
+    resp, err := s.httpClient.Do(req)
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+
+    // Check for success status code
+    if resp.StatusCode != http.StatusOK {
+        body, _ := io.ReadAll(resp.Body)
+        return fmt.Errorf("failed to update twitter tokens, status: %d, response: %s", resp.StatusCode, string(body))
+    }
+
+    return nil
+}
+
+func (s *userServiceImpl) GetTwitterTokens(email string) (string, string, error) {
+    req, _ := http.NewRequest("GET", s.supabaseURL+"/rest/v1/profiles?email=eq."+email, nil)
+    req.Header.Set("apikey", s.supabaseKey)
+    req.Header.Set("Authorization", "Bearer "+s.supabaseKey)
+    resp, err := s.httpClient.Do(req)
+    if err != nil {
+        return "", "", err
+    }
+    defer resp.Body.Close()
+    if resp.StatusCode != http.StatusOK {
+        body, _ := io.ReadAll(resp.Body)
+        return "", "", fmt.Errorf("failed to fetch user, status: %d, response: %s", resp.StatusCode, string(body))
+    }
+    var users []models.User
+    json.NewDecoder(resp.Body).Decode(&users)
+    if len(users) == 0 || users[0].TwitterAccessToken == nil || users[0].TwitterAccessSecret == nil {
+        return "", "", fmt.Errorf("twitter tokens not found")
+    }
+    return *users[0].TwitterAccessToken, *users[0].TwitterAccessSecret, nil
 }
