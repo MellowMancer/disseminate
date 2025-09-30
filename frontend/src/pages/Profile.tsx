@@ -56,12 +56,12 @@ const Profile: React.FC = () => {
             return <p>Loading Twitter status...</p>;
         }
         if (twitterLinked && tokenValid) {
-            return <p style={{ color: 'green' }}>✅ Twitter is connected and ready to post.</p>;
+            return <p style={{ color: 'green' }}>Twitter is connected and ready to post.</p>;
         }
         if (twitterLinked && !tokenValid) {
             return (
                 <>
-                    <p style={{ color: 'orange' }}>⚠️ Your Twitter connection has expired.</p>
+                    <p style={{ color: 'orange' }}>Your Twitter connection has expired.</p>
                     <button onClick={handleTwitterLogin}>Reauthorize Twitter</button>
                 </>
             );

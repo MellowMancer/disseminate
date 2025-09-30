@@ -46,32 +46,57 @@ export function Navbar() {
             <NavigationMenuList>
                 <NavigationMenuItem>
                     <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                        <div onClick={handleHomeButton} aria-label="Home" role="button">
+                        <button
+                            onClick={handleHomeButton}
+                            aria-label="Home"
+                            className="bg-transparent border-none p-0 m-0 cursor-pointer"
+                            type="button"
+                        >
                             Home
-                        </div>
+                        </button>
                     </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                     <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                        <div onClick={handleAboutButton} aria-label="About" role="button">
+                        <button
+                            onClick={handleAboutButton}
+                            aria-label="About"
+                            className="bg-transparent border-none p-0 m-0 cursor-pointer"
+                            type="button"
+                        >
                             About
-                        </div>
+                        </button>
                     </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                     <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                        <div onClick={handleProfileButton} aria-label="Profile" role="button">
+                        <button
+                            onClick={handleProfileButton}
+                            aria-label="Profile"
+                            className="bg-transparent border-none p-0 m-0 cursor-pointer"
+                            type="button"
+                        >
                             Profile & Keys
-                        </div>
+                        </button>
                     </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                     <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                        {authenticated ? (<div onClick={handleLogout} aria-label="Logout" role="button">
+                        {authenticated ? (<button
+                            onClick={handleLogout}
+                            aria-label="Logout"
+                            className="bg-transparent border-none p-0 m-0 cursor-pointer"
+                            type="button"
+                        >
                             Logout
-                        </div>) : (<div onClick={handleLoginButton} aria-label="Login" role="button">
+                        </button>) : (<button
+                            onClick={handleLoginButton}
+                            aria-label="Login"
+                            className="bg-transparent border-none p-0 m-0 cursor-pointer"
+                            type="button"
+                        >
                             Login
-                        </div>)
+                        </button>)
                         }
                     </NavigationMenuLink>
                 </NavigationMenuItem>

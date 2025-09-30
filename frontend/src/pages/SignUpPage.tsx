@@ -64,7 +64,7 @@ export default function SignUpPage() {
                             rules={{
                                 required: "Please enter your email",
                                 pattern: {
-                                    value: /^\S+@\S+$/i,
+                                    value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
                                     message: "Invalid email address",
                                 },
                             }}

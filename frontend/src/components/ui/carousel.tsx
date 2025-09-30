@@ -135,7 +135,7 @@ const Carousel: React.FC<CarouselProps> = ({
             >
                 {mediaList.map((item, idx) => (
                     <div
-                        key={idx}
+                        key={item.id}
                         className="flex justify-center items-center h-full w-full"
                         style={{
                             transition: `opacity ${transitionDuration}ms ease`,
@@ -147,13 +147,20 @@ const Carousel: React.FC<CarouselProps> = ({
                         <DialogTrigger className="w-full h-full">
                             
                             {item.type === "image" ? (
-                                <img
-                                    src={item.src}
-                                    alt=""
-                                    className={"h-full w-auto object-contain mx-auto" + border}
+                                <button
+                                    type="button"
                                     onClick={() => setEditingIndex(idx)}
+                                    className="h-full w-auto object-contain mx-auto p-0 border-none bg-transparent"
                                     style={{ cursor: "pointer" }}
-                                />
+                                    aria-label="Edit image"
+                                >
+                                    <img
+                                        src={item.src}
+                                        alt=""
+                                        className={"h-full w-auto object-contain mx-auto pointer-events-none" + border}
+                                        draggable={false}
+                                    />
+                                </button>
                             ) : (
                                 <video
                                     src={item.src}

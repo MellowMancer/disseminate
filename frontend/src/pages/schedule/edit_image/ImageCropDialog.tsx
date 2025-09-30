@@ -10,12 +10,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 type ImageCropDialogProps = {
     src: string;
-    aspect?: number;
     onClose: () => void;
     onCropComplete: (croppedDataUrl: string) => void;
 };
 
-export function ImageCropDialog({ src, onClose, onCropComplete }: ImageCropDialogProps) {
+export function ImageCropDialog({ src, onClose, onCropComplete }: Readonly<ImageCropDialogProps>) {
     const previewCanvasRef = useRef<HTMLCanvasElement>(null)
     const imgRef = useRef<HTMLImageElement>(null)
     const [crop, setCrop] = useState<Crop>()
@@ -37,7 +36,7 @@ export function ImageCropDialog({ src, onClose, onCropComplete }: ImageCropDialo
     ];
 
     const parseAspect = (input: string): number | undefined => {
-        const match = input.match(/\((\d+)\s*\/\s*(\d+)\)/);
+        const match = RegExp(/\((\d+)\s*\/\s*(\d+)\)/).exec(input);
         if (!match) {
             setAspect(undefined);
             return;
@@ -50,7 +49,6 @@ export function ImageCropDialog({ src, onClose, onCropComplete }: ImageCropDialo
             setCrop(newCrop)
             setCompletedCrop(convertToPixelCrop(newCrop, width, height))
         }
-        return;
     };
     // Center crop with aspect ratio
     function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: number) {

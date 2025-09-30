@@ -23,7 +23,7 @@ export default function LoginPage() {
   const { authenticated: _, setAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as any)?.from?.pathname || "/";
+  const from = (location.state)?.from?.pathname || "/";
 
   const form = useForm<LoginFormValues>({
     mode: "onChange",
@@ -69,7 +69,7 @@ export default function LoginPage() {
                 rules={{
                   required: "Please enter your email",
                   pattern: {
-                    value: /^\S+@\S+$/i,
+                    value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
                     message: "Invalid email address",
                   },
                 }}

@@ -6,7 +6,7 @@ type DynamicShadowWrapperProps = {
     className?: string;
 };
 
-export function DynamicShadowWrapper({ children, className = '' }: DynamicShadowWrapperProps) {
+export function DynamicShadowWrapper({ children, className = '' }: Readonly<DynamicShadowWrapperProps>) {
     const ref = useRef<HTMLDivElement>(null);
     const [shadowOffset, setShadowOffset] = useState({ x: 0, y: 0 });
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -28,9 +28,14 @@ export function DynamicShadowWrapper({ children, className = '' }: DynamicShadow
             isNavMenuItem = child.type === NavigationMenuPrimitive.Item;
         }
     }
-
-    // Compute scale factor based on Tailwind breakpoints with override for NavMenuItem
-    let scaleFactor = windowWidth >= 768 ? 1 : windowWidth >= 640 ? 0.7 : 0.5;
+    let scaleFactor: number;
+    if (windowWidth >= 768) {
+        scaleFactor = 1;
+    } else if (windowWidth >= 640) {
+        scaleFactor = 0.7;
+    } else {
+        scaleFactor = 0.5;
+    }
     if (isNavMenuItem) {
         scaleFactor = 0.15;
     }

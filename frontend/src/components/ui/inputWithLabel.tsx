@@ -6,7 +6,7 @@ export interface InputWithLabelProps extends React.ComponentProps<"input"> {
   label: string;
 }
 
-export function InputWithLabel({ className, type, label, placeholder, ...props }: InputWithLabelProps) {
+export function InputWithLabel({ className, type, label, placeholder, ...props }: Readonly<InputWithLabelProps>) {
   const inputId = label; 
 
   return (

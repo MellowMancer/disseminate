@@ -149,8 +149,8 @@ export function SchedulerPage() {
         </DynamicShadowWrapper>
         <div className='col-span-11 md:col-span-5 place-self-center w-full'>
           {Object.entries(carouselsData).map(([tabKey, mediaItems]) => (
-            <Dialog>
-                <div key={tabKey} style={{ display: tabKey === activeTab ? 'block' : 'none' }}>
+            <Dialog key={tabKey}>
+                <div style={{ display: tabKey === activeTab ? 'block' : 'none' }}>
                   <Carousel mediaItems={mediaItems} />
                 </div>
             </Dialog>
