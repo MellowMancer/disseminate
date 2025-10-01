@@ -1,71 +1,95 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import axios from 'axios';
 import { toast } from 'sonner';
-import type { FormDataState } from '@/types/forms';
+import { useLocation, useNavigate } from 'react-router-dom';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DynamicShadowWrapper } from "@/components/ui/dynamic-shadow-wrapper";
+import Carousel from "@/components/ui/carousel";
+
+import type { FormDataState } from '@/types/forms';
 import { TwitterTab } from '@/pages/schedule/TwitterTab';
 import { YouTubeTab } from '@/pages/schedule/YoutubeTab';
-import { useLocation } from 'react-router-dom';
-import Carousel from "@/components/ui/carousel";
-import { Dialog } from "@/components/ui/dialog";
-import { DynamicShadowWrapper } from "@/components/ui/dynamic-shadow-wrapper";
+
+type TabKey = 'twitter' | 'youtube' | 'instagram' | 'reddit' | 'mastodon' | 'artstation';
+
+type MediaItemType = {
+  id: string;
+  type: "image" | "video";
+  src: string;
+};
 
 const initialFormData: FormDataState = {
   importData: {},
   twitter: { apiKey: '', apiSecret: '', accessToken: '', accessSecret: '', content: '' },
-  youtubeShort: { clientId: '', clientSecret: '', title: '', description: '' },
-  youtubeVideo: { clientId: '', clientSecret: '', title: '', description: '' },
-  instagramPost: { username: '', password: '', caption: '' },
-  instagramReel: { username: '', password: '', caption: '' },
+  youtube: { apiKey: '', accessToken: '', title: '', description: '', tags: '' },
+  instagram: { username: '', password: '', caption: '' },
   reddit: { clientId: '', clientSecret: '', username: '', password: '', subreddit: '', title: '', content: '' },
   mastodon: { instanceUrl: '', accessToken: '', content: '' },
   artstation: { username: '', password: '', title: '', description: '' },
 };
 
+const createInitialSelectedMedia = (): Record<TabKey, Set<string>> => ({
+  twitter: new Set(),
+  youtube: new Set(),
+  instagram: new Set(),
+  reddit: new Set(),
+  mastodon: new Set(),
+  artstation: new Set(),
+});
 
+type MediaOverride = { src: string; file: File; };
+type MediaOverrides = Record<TabKey, Record<string, MediaOverride>>;
+const createInitialMediaOverrides = (): MediaOverrides => ({
+  twitter: {}, youtube: {}, instagram: {}, reddit: {}, mastodon: {}, artstation: {},
+});
 
 
 export function SchedulerPage() {
-  const [formData, setFormData] = useState<FormDataState>(initialFormData);
   const location = useLocation();
-  const [activeTab, setActiveTab] = React.useState<TabKey>('twitter');
-
-  const files = location.state?.files as FileList;
-
-  type TabKey = 'twitter' | 'youtube' | 'instagram' | 'reddit' | 'mastodon' | 'artstation';
-
-
-  type MediaItemType = {
-    id: string,
-    type: "image" | "video";
-    src: string;
-  };
-
-  const mediaItems: MediaItemType[] = Array.from(files).map((file) => ({
-    id: file.name + "_" + file.type + " " + file.lastModified,
-    type: file.type.startsWith("video") ? "video" : "image", // explicitly typed
-    src: URL.createObjectURL(file),
-  }));
-
-  const twitterMediaItems = appendTabToIds(mediaItems, "twitter");
-  const youtubeMediaItems = appendTabToIds(mediaItems, "youtube");
-  const instagramMediaItems = appendTabToIds(mediaItems, "instagram");
-  const redditMediaItems = appendTabToIds(mediaItems, "reddit");
-  const mastodonMediaItems = appendTabToIds(mediaItems, "mastodon");
-  const artstationMediaItems = appendTabToIds(mediaItems, "artstation");
-
-  const carouselsData: Record<TabKey, MediaItemType[]> = {
-    twitter: twitterMediaItems,
-    youtube: youtubeMediaItems,
-    instagram: instagramMediaItems,
-    reddit: redditMediaItems,
-    mastodon: mastodonMediaItems,
-    artstation: artstationMediaItems,
-  };
+  const navigate = useNavigate();
+  console.log('SchedulerPage Location State:', location.state);
+  const [isReady, setIsReady] = useState(false);
+  const [formData, setFormData] = useState<FormDataState>(initialFormData);
+  const [activeTab, setActiveTab] = useState<TabKey>('twitter');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [originalMediaItems, setOriginalMediaItems] = useState<MediaItemType[]>([]);
+  const [originalFileMap, setOriginalFileMap] = useState<Map<string, File>>(new Map());
+  const [mediaOverrides, setMediaOverrides] = useState<MediaOverrides>(createInitialMediaOverrides());
+  const [selectedMedia, setSelectedMedia] = useState(createInitialSelectedMedia());
 
 
+  useEffect(() => {
+    const files = location.state?.files as FileList | undefined;
 
+    if (!files || files.length === 0) {
+      console.error("SchedulerPage loaded without files.");
+      return;
+    }
+
+    const items: MediaItemType[] = [];
+    const map = new Map<string, File>();
+
+    Array.from(files).forEach(file => {
+      const id = `${file.name}-${file.lastModified}-${file.size}`;
+      items.push({
+        id,
+        type: file.type.startsWith("video") ? "video" : "image",
+        src: URL.createObjectURL(file),
+      });
+      map.set(id, file);
+    });
+
+    setOriginalMediaItems(items);
+    setOriginalFileMap(map);
+    setIsReady(true);
+
+    return () => {
+      items.forEach(item => URL.revokeObjectURL(item.src));
+    };
+  }, [location.state?.files]);
 
   const handleChange = <P extends keyof FormDataState>(
     platform: P,
@@ -73,91 +97,182 @@ export function SchedulerPage() {
   ) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({
       ...prev,
-      [platform]: {
-        ...prev[platform],
-        [field]: event.target.value,
+      [platform]: { ...prev[platform], [field]: event.target.value },
+    }));
+  };
+
+  const carouselMediaItems = useMemo(() => {
+    const overridesForTab = mediaOverrides[activeTab] || {};
+    return originalMediaItems.map(item => {
+      if (overridesForTab[item.id]) {
+        // If an override exists for this tab, use its src
+        return { ...item, src: overridesForTab[item.id].src };
+      }
+      // Otherwise, use the original
+      return item;
+    });
+  }, [originalMediaItems, mediaOverrides, activeTab]);
+
+
+  const handleMediaSelectionChange = (mediaId: string) => {
+    setSelectedMedia(prev => {
+      const newSelectionsForTab = new Set(prev[activeTab]); // Copy the set for the active tab
+      if (newSelectionsForTab.has(mediaId)) {
+        newSelectionsForTab.delete(mediaId);
+      } else {
+        newSelectionsForTab.add(mediaId);
+      }
+      return { ...prev, [activeTab]: newSelectionsForTab };
+    });
+  };
+
+  const handleMediaUpdate = async (id: string, newSrc: string) => {
+    const response = await fetch(newSrc);
+    const blob = await response.blob();
+    const originalFile = originalFileMap.get(id);
+    const newFile = new File([blob], originalFile?.name || 'cropped-image.png', { type: blob.type });
+
+    const newOverride: MediaOverride = { src: newSrc, file: newFile };
+
+    // Update the overrides state for the currently active tab
+    setMediaOverrides(prev => ({
+      ...prev,
+      [activeTab]: {
+        ...prev[activeTab],
+        [id]: newOverride,
       },
     }));
+    toast.success(`Edit saved for ${activeTab}.`);
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleRevertMedia = (id: string) => {
+    setMediaOverrides(prev => {
+      const newOverridesForTab = { ...prev[activeTab] };
+      delete newOverridesForTab[id]; // Remove the override for this item
+      return {
+        ...prev,
+        [activeTab]: newOverridesForTab,
+      };
+    });
+    toast.info("Reverted to original image.");
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log('Form Submitted:', formData);
-    toast.info('Form submitted! Check the console for the data.');
+    const selectedIds = selectedMedia[activeTab];
+    // ... (check for size > 0, setIsSubmitting, etc.)
+
+    const submissionData = new FormData();
+    // ... (append platformData and platform)
+
+    const overridesForTab = mediaOverrides[activeTab] || {};
+
+    selectedIds.forEach(id => {
+      let fileToSubmit: File | undefined;
+
+      // Check if there is an override for this platform
+      if (overridesForTab[id]) {
+        fileToSubmit = overridesForTab[id].file;
+      } else {
+        // Otherwise, fall back to the original file
+        fileToSubmit = originalFileMap.get(id);
+      }
+
+      if (fileToSubmit) {
+        submissionData.append('media', fileToSubmit);
+      }
+    });
+
+    try {
+      // The actual API call to your backend
+      await axios.post('/api/schedule-post', submissionData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      toast.success('Post scheduled successfully!');
+    } catch (error) {
+      toast.error('Failed to schedule post.');
+      console.error('Submission Error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  function appendTabToIds(items: MediaItemType[], tabName: string): MediaItemType[] {
-    return items.map(item => ({
-      ...item,
-      id: `${tabName}_${item.id}`,
-    }));
-  }
-  console.log('Active Tab:', activeTab);
-  console.log('Carousel mediaItems for active tab:', carouselsData[activeTab]);
-  return (
-    <div className='w-full h-full grid place-items-center'>
-      <div className="grid grid-cols-11 grid-rows-min gap-y-8 md:gap-x-8 w-full h-full content-center">
-        <DynamicShadowWrapper className="col-span-11 md:col-span-6 h-min ">
-        <Card >
+  if (!isReady) {
+    return (
+      <div className='w-full h-full grid place-items-center p-4'>
+        <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Create a New Post</CardTitle>
-            <CardDescription>Fill out the details for each platform you want to post to.</CardDescription>
+            <CardTitle>Loading Media...</CardTitle>
+            <CardDescription>
+              If you refreshed this page, the media files were lost and you'll need to go back.
+            </CardDescription>
           </CardHeader>
+          <CardFooter>
+            <Button className="w-full" onClick={() => navigate('/')}>
+              Go Back to Upload
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
-          <CardContent>
-            <form onSubmit={handleSubmit}>
-              <Tabs
-                value={activeTab}
-                onValueChange={(value: string) => setActiveTab(value as TabKey)}
-                className="w-full"
-              >
-                <div className="overflow-x-auto pb-2">
-                  <TabsList>
+  return (
+    <div className='w-full h-full grid place-items-center p-4'>
+      <div className="grid grid-cols-11 grid-rows-min gap-y-8 md:gap-x-8 w-full h-full content-center max-w-6xl">
+        <DynamicShadowWrapper className="col-span-11 md:col-span-6 h-min ">
+          <Card>
+            <CardHeader>
+              <CardTitle>Create a New Post</CardTitle>
+              <CardDescription>Fill out the details for each platform you want to post to.</CardDescription>
+            </CardHeader>
+
+            <CardContent>
+              <form onSubmit={handleSubmit}>
+                <Tabs
+                  value={activeTab}
+                  onValueChange={(value) => setActiveTab(value as TabKey)}
+                  className="w-full"
+                >
+                  <div className="overflow-x-auto pb-2">
                     <TabsList>
                       <TabsTrigger value="twitter">Twitter / X</TabsTrigger>
                       <TabsTrigger value="youtube">YouTube</TabsTrigger>
-                      <TabsTrigger value="twitter">Instagram</TabsTrigger>
-                      <TabsTrigger value="youtube">Reddit</TabsTrigger>
-                      <TabsTrigger value="twitter">Bluesky</TabsTrigger>
-                      <TabsTrigger value="youtube">Mastodon</TabsTrigger>
-                      <TabsTrigger value="twitter">Artstation</TabsTrigger>
+                      <TabsTrigger value="instagram">Instagram</TabsTrigger>
+                      <TabsTrigger value="reddit">Reddit</TabsTrigger>
+                      <TabsTrigger value="mastodon">Mastodon</TabsTrigger>
+                      <TabsTrigger value="artstation">Artstation</TabsTrigger>
                     </TabsList>
-                  </TabsList>
-                </div>
+                  </div>
 
-                {/* Render the modular components */}
-                <TabsContent value="twitter">
-                  <TwitterTab data={formData.twitter} handleChange={handleChange} />
-                </TabsContent>
+                  <TabsContent value="twitter">
+                    <TwitterTab data={formData.twitter} handleChange={handleChange} />
+                  </TabsContent>
 
-                <TabsContent value="youtube_short">
-                  <YouTubeTab data={formData.youtubeShort} handleChange={handleChange} platform="youtubeShort" />
-                </TabsContent>
-
-                <TabsContent value="youtube_video">
-                  <YouTubeTab data={formData.youtubeVideo} handleChange={handleChange} platform="youtubeVideo" />
-                </TabsContent>
-
-                {/* ... other TabsContent sections ... */}
-              </Tabs>
-              <CardFooter className="mt-8 p-0">
-                <Button type="submit" className="w-full bg-button text-white">Schedule Post</Button>
-              </CardFooter>
-            </form>
-          </CardContent>
-        </Card>
+                  <TabsContent value="youtube">
+                    <YouTubeTab data={formData.youtube} handleChange={handleChange} />
+                  </TabsContent>
+                </Tabs>
+                <CardFooter className="mt-8 p-0">
+                  <Button type="submit" className="w-full bg-button text-white" disabled={isSubmitting}>
+                    {isSubmitting ? 'Scheduling...' : `Schedule for ${activeTab}`}
+                  </Button>
+                </CardFooter>
+              </form>
+            </CardContent>
+          </Card>
         </DynamicShadowWrapper>
         <div className='col-span-11 md:col-span-5 place-self-center w-full'>
-          {Object.entries(carouselsData).map(([tabKey, mediaItems]) => (
-            <Dialog key={tabKey}>
-                <div style={{ display: tabKey === activeTab ? 'block' : 'none' }}>
-                  <Carousel mediaItems={mediaItems} />
-                </div>
-            </Dialog>
-          ))}
+          <Carousel
+            mediaItems={carouselMediaItems}
+            selectedIds={selectedMedia[activeTab]}
+            overriddenIds={Object.keys(mediaOverrides[activeTab] || {})}
+            onSelectionChange={handleMediaSelectionChange}
+            onMediaUpdate={handleMediaUpdate}
+            onRevert={handleRevertMedia}
+          />
         </div>
-
       </div>
-    </div >
+    </div>
   );
 }
