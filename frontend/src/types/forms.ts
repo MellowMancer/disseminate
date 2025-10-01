@@ -1,10 +1,8 @@
 export type FormDataState = {
   importData: {};
   twitter: { apiKey: string; apiSecret: string; accessToken: string; accessSecret: string; content: string };
-  youtubeShort: { clientId: string; clientSecret: string; title: string; description: string };
-  youtubeVideo: { clientId: string; clientSecret: string; title: string; description: string };
-  instagramPost: { username: string; password: string; caption: string };
-  instagramReel: { username: string; password: string; caption: string };
+  youtube: { apiKey: string; accessToken: string; title: string; description: string; tags: string };
+  instagram: { username: string; password: string; caption: string };
   reddit: { clientId: string; clientSecret: string; username: string; password: string; subreddit: string; title: string; content: string };
   mastodon: { instanceUrl: string; accessToken: string; content: string };
   artstation: { username: string; password: string; title: string; description: string };

@@ -13,6 +13,13 @@ type ImageCropDialogProps = {
     onClose: () => void;
     onCropComplete: (croppedDataUrl: string) => void;
 };
+function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: number) {
+    return centerCrop(
+        makeAspectCrop({ unit: '%', width: 90 }, aspect, mediaWidth, mediaHeight),
+        mediaWidth,
+        mediaHeight
+    );
+}
 
 export function ImageCropDialog({ src, onClose, onCropComplete }: Readonly<ImageCropDialogProps>) {
     const previewCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -22,7 +29,7 @@ export function ImageCropDialog({ src, onClose, onCropComplete }: Readonly<Image
     const [scale] = useState(1)
     const [rotate] = useState(0)
     const [aspect, setAspect] = useState<number | undefined>(1)
-    const [cropping] = useState(false)
+    const [cropping] = useState(true)
 
     const aspectOptions = [
         "Free",
@@ -51,13 +58,7 @@ export function ImageCropDialog({ src, onClose, onCropComplete }: Readonly<Image
         }
     };
     // Center crop with aspect ratio
-    function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: number) {
-        return centerCrop(
-            makeAspectCrop({ unit: '%', width: 90 }, aspect, mediaWidth, mediaHeight),
-            mediaWidth,
-            mediaHeight
-        );
-    }
+
 
     // Update crop when image loads
     function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
@@ -135,7 +136,6 @@ export function ImageCropDialog({ src, onClose, onCropComplete }: Readonly<Image
                                 />
                             )
                         )}
-
 
                         <div className="mt-4">
                             {completedCrop && (
