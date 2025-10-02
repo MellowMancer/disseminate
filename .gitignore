@@ -1,3 +1,3 @@
-# I am kind of lazy to check whether forward slashes work or back slashes
+.env
 .vscode/
-.vscode\
+mykey.pub
