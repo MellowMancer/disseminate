@@ -5,6 +5,6 @@ echo "Installing dependencies..."
 yarn install --immutable
 
 echo "Building frontend assets..."
-yarn run build
+yarn build
 
 echo "Build complete."

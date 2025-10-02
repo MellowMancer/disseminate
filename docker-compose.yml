@@ -1,21 +1,10 @@
 services:
   backend:
     build:
-      context: ./backend
-    volumes:
-      - ./backend:/app       # Source code sync for hot reload
-      - /app/tmp             # Air temp directory (anonymous volume)
+      context: .
     ports:
       - "8080:8080"
-    command: ["air", "-c", ".air.toml"]
+    env_file:
+      - ./.env 
 
-  frontend:
-    build:
-      context: ./frontend
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    ports:
-      - "5173:5173"
-    environment:
-      - REACT_APP_API_URL=http://localhost:1323/api
+# docker-compose up --build
