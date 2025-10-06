@@ -70,8 +70,7 @@ export function SchedulerPage() {
 
     const items: MediaItemType[] = [];
     const map = new Map<string, File>();
-
-    Array.from(files).forEach(file => {
+    for(const file of Array.from(files)){
       const id = `${file.name}-${file.lastModified}-${file.size}`;
       items.push({
         id,
@@ -79,14 +78,14 @@ export function SchedulerPage() {
         src: URL.createObjectURL(file),
       });
       map.set(id, file);
-    });
+    };
 
     setOriginalMediaItems(items);
     setOriginalFileMap(map);
     setIsReady(true);
 
     return () => {
-      items.forEach(item => URL.revokeObjectURL(item.src));
+      for(const item of items){URL.revokeObjectURL(item.src)}
     };
   }, [location.state?.files]);
 
@@ -176,7 +175,7 @@ export function SchedulerPage() {
     // 5. Append only the selected files
     const overridesForTab = mediaOverrides[activeTab] || {};
 
-    selectedIds.forEach(id => {
+    for(const id of selectedIds) {
       let fileToSubmit: File | undefined;
 
       // Check if there is an override for this platform
@@ -190,7 +189,7 @@ export function SchedulerPage() {
       if (fileToSubmit) {
         submissionData.append('media', fileToSubmit);
       }
-    });
+    };
 
     try {
       // The actual API call to your backend

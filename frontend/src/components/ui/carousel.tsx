@@ -126,8 +126,8 @@ const Carousel: React.FC<CarouselProps> = ({
             if (e.key === "ArrowLeft") prev();
             else if (e.key === "ArrowRight") next();
         };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
+        globalThis.addEventListener("keydown", handleKeyDown);
+        return () => globalThis.removeEventListener("keydown", handleKeyDown);
     }, [currentIndex, mediaItems.length]);
 
 

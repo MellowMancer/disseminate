@@ -43,7 +43,7 @@ export function ImageCropDialog({ src, onClose, onCropComplete }: Readonly<Image
     ];
 
     const parseAspect = (input: string): number | undefined => {
-        const match = RegExp(/\((\d+)\s*\/\s*(\d+)\)/).exec(input);
+        const match = new RegExp(/\((\d+)\s*\/\s*(\d+)\)/).exec(input);
         if (!match) {
             setAspect(undefined);
             return;
