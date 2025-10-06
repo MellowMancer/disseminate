@@ -54,6 +54,7 @@ func main() {
 	userHandler := handlers.NewHandler(userService)
 	twitterService := services.NewTwitterService(twitterConfig)
 	twitterHandler := handlers.NewTwitterHandler(twitterService, userService)
+	platformHandler := handlers.NewPlatformHandler(twitterService, userService)
 
 	e := echo.New()
 
@@ -68,6 +69,7 @@ func main() {
 
 	apiGroup := e.Group("/api")
 	apiGroup.Use(middlewares.JWTMiddleware(jwtSecret, []string{}))
+	routes.RegisterPlatformRoute(apiGroup, platformHandler)
 	routes.RegisterTwitterRoutes(apiGroup, twitterHandler)
 
 	e.GET("/twitter/link/callback", twitterHandler.Callback)

@@ -50,7 +50,6 @@ const createInitialMediaOverrides = (): MediaOverrides => ({
 export function SchedulerPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  console.log('SchedulerPage Location State:', location.state);
   const [isReady, setIsReady] = useState(false);
   const [formData, setFormData] = useState<FormDataState>(initialFormData);
   const [activeTab, setActiveTab] = useState<TabKey>('twitter');
@@ -159,12 +158,22 @@ export function SchedulerPage() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setIsSubmitting(true);
+
     const selectedIds = selectedMedia[activeTab];
-    // ... (check for size > 0, setIsSubmitting, etc.)
+    if (selectedIds.size === 0) {
+      toast.error(`Please select at least one media item for ${activeTab}.`);
+      setIsSubmitting(false);
+      return;
+    }
+
 
     const submissionData = new FormData();
-    // ... (append platformData and platform)
+    const platformData = formData[activeTab];
+    submissionData.append('platform', activeTab);
+    submissionData.append('platformData', JSON.stringify(platformData));
 
+    // 5. Append only the selected files
     const overridesForTab = mediaOverrides[activeTab] || {};
 
     selectedIds.forEach(id => {
@@ -185,7 +194,7 @@ export function SchedulerPage() {
 
     try {
       // The actual API call to your backend
-      await axios.post('/api/schedule-post', submissionData, {
+      await axios.post('/api/create', submissionData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       toast.success('Post scheduled successfully!');
