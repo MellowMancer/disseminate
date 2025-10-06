@@ -9,15 +9,15 @@ type DynamicShadowWrapperProps = {
 export function DynamicShadowWrapper({ children, className = '' }: Readonly<DynamicShadowWrapperProps>) {
     const ref = useRef<HTMLDivElement>(null);
     const [shadowOffset, setShadowOffset] = useState({ x: 0, y: 0 });
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    const [windowWidth, setWindowWidth] = useState(globalThis.innerWidth);
 
 
     useEffect(() => {
         function handleResize() {
-            setWindowWidth(window.innerWidth);
+            setWindowWidth(globalThis.innerWidth);
         }
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        globalThis.addEventListener('resize', handleResize);
+        return () => globalThis.removeEventListener('resize', handleResize);
     }, []);
 
     let isNavMenuItem = false;
@@ -46,7 +46,7 @@ export function DynamicShadowWrapper({ children, className = '' }: Readonly<Dyna
 
             const rect = ref.current.getBoundingClientRect();
 
-            let lightSourceX = window.innerWidth / 2 - 120;
+            let lightSourceX = globalThis.innerWidth / 2 - 120;
             let lightSourceY = 0;
 
             const elementCenterX = rect.left + rect.width / 2;
@@ -62,13 +62,13 @@ export function DynamicShadowWrapper({ children, className = '' }: Readonly<Dyna
 
 
         updateShadowPosition();
-        window.addEventListener('resize', updateShadowPosition);
-        window.addEventListener('scroll', updateShadowPosition, true);
+        globalThis.addEventListener('resize', updateShadowPosition);
+        globalThis.addEventListener('scroll', updateShadowPosition, true);
 
         return () => {
-            window.removeEventListener('mousemove', updateShadowPosition);
-            window.removeEventListener('resize', updateShadowPosition);
-            window.removeEventListener('scroll', updateShadowPosition, true);
+            globalThis.removeEventListener('mousemove', updateShadowPosition);
+            globalThis.removeEventListener('resize', updateShadowPosition);
+            globalThis.removeEventListener('scroll', updateShadowPosition, true);
         };
     }, [windowWidth, scaleFactor]);
 

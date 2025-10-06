@@ -34,6 +34,7 @@ func NewTwitterService(config *oauth1.Config) TwitterService {
 		twitterConfig: config,
 	}
 }
+
 type v2InitResponse struct {
 	Data struct {
 		ID string `json:"id"`
@@ -189,78 +190,24 @@ func (s *twitterServiceImpl) uploadSingleChunked(httpClient *http.Client, mediaD
 	}
 
 	// 2. APPEND
-	const maxChunkSize = 4 * 1024 * 1024
-	var segmentIndex int
-
-	reader := bytes.NewReader(mediaData)
-	chunk := make([]byte, maxChunkSize)
-
-	for {
-		bytesRead, err := reader.Read(chunk)
-		if err != nil && err != io.EOF {
-			return "", err
-		}
-		if bytesRead == 0 {
-			break
-		}
-
-		statusCode, err := s.appendUpload(httpClient, mediaID, chunk[:bytesRead], segmentIndex)
-		if err != nil {
-			return "", fmt.Errorf("failed to append chunk %d: %w", segmentIndex, err)
-		}
-		if statusCode != http.StatusNoContent && statusCode != http.StatusOK {
-			return "", fmt.Errorf("append chunk %d returned bad status: %d", segmentIndex, statusCode)
-		}
-
-		segmentIndex++
+	err = s.appendUploads(httpClient, mediaID, mediaData)
+	if err != nil {
+		log.Println("--- twitterService.uploadSingleChunked: ERROR during APPEND ---")
+		return "", fmt.Errorf("chunked upload APPEND failed: %w", err)
 	}
 
-	// --- 3. FINALIZE (Now conditional based on append's response) ---
+	// 3. FINALIZE
 	err = s.finalizeUpload(httpClient, mediaID)
 	if err != nil {
 		return "", fmt.Errorf("chunked upload FINALIZE failed: %w", err)
 	}
 
-	// --- 4. V2 STATUS CHECK  ---
-	// This check is only necessary for media that requires server-side processing.
-	if mediaCategory == "tweet_video" || mediaCategory == "tweet_gif" {
-		log.Println("Media requires processing, beginning status checks...")
-
-		timeout := time.After(5 * time.Minute)
-		checkAfter := 5 * time.Second
-
-		for {
-			select {
-			case <-timeout:
-				return "", errors.New("timed out while waiting for media processing")
-
-			case <-time.After(checkAfter):
-				statusResp, err := s.statusUpload(httpClient, mediaID)
-				if err != nil {
-					return "", fmt.Errorf("error during STATUS check: %w", err)
-				}
-
-				state := statusResp.Data.ProcessingInfo.State
-				log.Printf("DEBUG: Media processing state is '%s', progress %d%%", state, statusResp.Data.ProcessingInfo.Progress)
-
-				if state == "succeeded" {
-					log.Println("--- twitterService.uploadSingleChunked: SUCCESS (Video Processed) ---")
-					return mediaID, nil // Success!
-				}
-
-				if state == "failed" {
-					return "", fmt.Errorf("media processing failed: %s", statusResp.Error.Message)
-				}
-
-				// Update the wait time for the next loop from the API's suggestion.
-				if statusResp.Data.ProcessingInfo.CheckAfterSecs > 0 {
-					checkAfter = time.Duration(statusResp.Data.ProcessingInfo.CheckAfterSecs) * time.Second
-				} else {
-					checkAfter = 5 * time.Second // Fallback delay
-				}
-			}
-		}
+	// 4. STATUS CHECK
+	err = s.statusHandlingLoop(httpClient, mediaCategory, mediaID)
+	if err != nil {
+		return "", fmt.Errorf("media processing failed: %w", err)
 	}
+
 	return mediaID, nil
 }
 
@@ -322,6 +269,34 @@ func (s *twitterServiceImpl) initUpload(httpClient *http.Client, mediaData []byt
 	log.Println("--- twitterService.initUpload: SUCCESS ---")
 	// CHANGE: Return the correct field.
 	return initResp.Data.ID, nil
+}
+
+func (s *twitterServiceImpl) appendUploads(httpClient *http.Client, mediaID string, mediaData []byte) error {
+	const maxChunkSize = 4 * 1024 * 1024
+	var segmentIndex int
+
+	reader := bytes.NewReader(mediaData)
+	chunk := make([]byte, maxChunkSize)
+
+	for {
+		bytesRead, err := reader.Read(chunk)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		if bytesRead == 0 {
+			break
+		}
+
+		statusCode, err := s.appendUpload(httpClient, mediaID, chunk[:bytesRead], segmentIndex)
+		if err != nil {
+			return fmt.Errorf("failed to append chunk %d: %w", segmentIndex, err)
+		}
+		if statusCode != http.StatusNoContent && statusCode != http.StatusOK {
+			return fmt.Errorf("append chunk %d returned bad status: %d", segmentIndex, statusCode)
+		}
+		segmentIndex++
+	}
+	return nil
 }
 
 func (s *twitterServiceImpl) appendUpload(httpClient *http.Client, mediaID string, mediaData []byte, segmentIndex int) (int, error) {
@@ -396,8 +371,6 @@ func (s *twitterServiceImpl) finalizeUpload(httpClient *http.Client, mediaID str
 	defer resp.Body.Close()
 	log.Println("DEBUG: Finalize request sent, awaiting response...")
 
-	// The response body is typically empty for a successful finalize.
-	// We log it anyway for debugging purposes.
 	body, _ := io.ReadAll(resp.Body)
 	log.Printf("DEBUG: Twitter FINALIZE response status=%d, body=%s", resp.StatusCode, string(body))
 
@@ -410,6 +383,48 @@ func (s *twitterServiceImpl) finalizeUpload(httpClient *http.Client, mediaID str
 
 	log.Println("--- twitterService.finalizeUpload: SUCCESS ---")
 	return nil
+}
+
+func (s *twitterServiceImpl) statusHandlingLoop(httpClient *http.Client, mediaCategory string, mediaID string) error {
+	if mediaCategory != "tweet_video" && mediaCategory != "tweet_gif" {
+		return nil // No processing needed for images
+	}
+	log.Println("Media requires processing, beginning status checks...")
+
+	timeout := time.After(5 * time.Minute)
+	checkAfter := 5 * time.Second
+
+	for {
+		select {
+		case <-timeout:
+			return errors.New("timed out while waiting for media processing")
+
+		case <-time.After(checkAfter):
+			statusResp, err := s.statusUpload(httpClient, mediaID)
+			if err != nil {
+				return fmt.Errorf("error during STATUS check: %w", err)
+			}
+
+			state := statusResp.Data.ProcessingInfo.State
+			log.Printf("DEBUG: Media processing state is '%s', progress %d%%", state, statusResp.Data.ProcessingInfo.Progress)
+
+			if state == "succeeded" {
+				log.Println("--- twitterService.uploadSingleChunked: SUCCESS (Video Processed) ---")
+				return nil // Success!
+			}
+
+			if state == "failed" {
+				return fmt.Errorf("media processing failed: %s", statusResp.Error.Message)
+			}
+
+			// Update the wait time for the next loop from the API's suggestion.
+			if statusResp.Data.ProcessingInfo.CheckAfterSecs > 0 {
+				checkAfter = time.Duration(statusResp.Data.ProcessingInfo.CheckAfterSecs) * time.Second
+			} else {
+				checkAfter = 5 * time.Second // Fallback delay
+			}
+		}
+	}
 }
 
 func (s *twitterServiceImpl) statusUpload(httpClient *http.Client, mediaID string) (*v2StatusResponse, error) {

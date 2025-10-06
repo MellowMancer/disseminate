@@ -30,24 +30,31 @@ func main() {
 		log.Println("No .env file found, using environment variables")
 	}
 
-	// --- Configuration ---
 	sessionSecret := os.Getenv("SESSION_SECRET")
 	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
 	appEnv := os.Getenv("APP_ENV")
 
-	// ... (rest of your configuration like twitterConfig, supabase, etc.)
 	twitterConsumerKey := os.Getenv("TWITTER_CONSUMER_KEY")
 	twitterConsumerSecret := os.Getenv("TWITTER_CONSUMER_SECRET")
 	twitterCallbackURL := os.Getenv("TWITTER_CALLBACK_URL")
 	supabaseURL := os.Getenv("SUPABASE_URL")
 	supabaseKey := os.Getenv("SUPABASE_KEY")
 
+	AuthorizeEndpoint := oauth1.Endpoint{
+		RequestTokenURL: "https://api.twitter.com/oauth/request_token",
+		AuthorizeURL:    "https://api.twitter.com/oauth/authorize",
+		AccessTokenURL:  "https://api.twitter.com/oauth/access_token",
+	}
+
+
 	twitterConfig := &oauth1.Config{
 		ConsumerKey:    twitterConsumerKey,
 		ConsumerSecret: twitterConsumerSecret,
 		CallbackURL:    twitterCallbackURL,
-		Endpoint: oauth1.Endpoint{ /* ... endpoint URLs ... */ },
+		Endpoint: AuthorizeEndpoint,
 	}
+
+	const TWITTERCALLBACKPATH = "/twitter/link/callback"
 
 	// --- Services and Handlers ---
 	userService := services.NewUserService(supabaseURL, supabaseKey, jwtSecret)
@@ -72,9 +79,8 @@ func main() {
 	routes.RegisterPlatformRoute(apiGroup, platformHandler)
 	routes.RegisterTwitterRoutes(apiGroup, twitterHandler)
 
-	e.GET("/twitter/link/callback", twitterHandler.Callback)
+	e.GET(TWITTERCALLBACKPATH, twitterHandler.Callback)
 
-	// --- Frontend Serving Logic (The Core Change) ---
 	if appEnv == "production" {
 		// --- PRODUCTION MODE ---
 		// Serve the frontend from the embedded filesystem.
@@ -87,7 +93,7 @@ func main() {
 			Skipper: func(c echo.Context) bool {
 				path := c.Request().URL.Path
 				// Skip static file serving for API routes
-				return strings.HasPrefix(path, "/api") || strings.HasPrefix(path, "/auth") || strings.HasPrefix(path, "/twitter/link/callback")
+				return strings.HasPrefix(path, "/api") || strings.HasPrefix(path, "/auth") || strings.HasPrefix(path, TWITTERCALLBACKPATH)
 			},
 			Filesystem: http.FS(staticFilesFS),
 			HTML5:      true, // Crucial for SPAs
@@ -104,7 +110,7 @@ func main() {
 			Skipper: func(c echo.Context) bool {
 				path := c.Request().URL.Path
 				// Skip proxying for API routes, let them be handled by Echo
-				return strings.HasPrefix(path, "/api") || strings.HasPrefix(path, "/auth") || strings.HasPrefix(path, "/twitter/link/callback")
+				return strings.HasPrefix(path, "/api") || strings.HasPrefix(path, "/auth") || strings.HasPrefix(path, TWITTERCALLBACKPATH)
 			},
 			Balancer: middleware.NewRoundRobinBalancer([]*middleware.ProxyTarget{
 				{
