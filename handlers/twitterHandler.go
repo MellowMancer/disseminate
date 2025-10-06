@@ -3,7 +3,6 @@ package handlers
 import (
 	"backend/services"
 	"fmt"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -24,15 +23,12 @@ func NewTwitterHandler(twitterService services.TwitterService, userService servi
 
 func (h *TwitterHandler) BeginTwitterLink(c echo.Context) error {
 	// This endpoint MUST be protected by JWTMiddleware.
-	claims, ok := c.Get("userClaims").(jwt.MapClaims)
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid user claims"})
+	ok, email, err := h.userService.IsLoggedIn(c)
+	if err != nil {
+		return err
 	}
-	email, ok := claims["sub"].(string)
 	if !ok {
-		// This handles cases where the 'sub' claim is missing or not a string.
-		// It returns a proper error instead of panicking.
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Email (sub) claim not found in token"})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not logged in"})
 	}
 
 	authURL, requestSecret, err := h.twitterService.GetAuthorizationURL()
@@ -129,22 +125,13 @@ func (h *TwitterHandler) Callback(c echo.Context) error {
 	return c.Redirect(http.StatusSeeOther, successRedirectURL)
 }
 
-func (h *TwitterHandler) PostTweet(c echo.Context) error {
-	// Post a tweet on behalf of the user
-	return nil
-}
-
 func (h *TwitterHandler) CheckTwitterToken(c echo.Context) error {
-	claims, ok := c.Get("userClaims").(jwt.MapClaims)
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token claims"})
+	ok, email, err := h.userService.IsLoggedIn(c)
+	if err != nil {
+		return err
 	}
-
-	email, ok := claims["sub"].(string)
 	if !ok {
-		// This handles cases where the 'sub' claim is missing or not a string.
-		// It returns a proper error instead of panicking.
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Email (sub) claim not found in token"})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not logged in"})
 	}
 	
 	accessToken, accessSecret, err := h.userService.GetTwitterTokens(email)
