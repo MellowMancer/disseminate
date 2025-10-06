@@ -13,6 +13,7 @@ import (
     _"net/http/httputil"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+    "github.com/labstack/echo/v4"
 )
 
 const api_path = "/rest/v1/profiles?email=eq."
@@ -23,6 +24,7 @@ type UserService interface {
 	GetJWTSecret() []byte
     LinkTwitterAccount(email, accessToken, accessSecret string) error
     GetTwitterTokens(email string) (string, string, error)
+    IsLoggedIn(c echo.Context) (bool, string, error)
 }
 
 type userServiceImpl struct {
@@ -203,4 +205,22 @@ func (s *userServiceImpl) GetTwitterTokens(email string) (string, string, error)
         return "", "", fmt.Errorf("twitter tokens not found")
     }
     return *users[0].TwitterAccessToken, *users[0].TwitterAccessSecret, nil
+}
+
+func (s *userServiceImpl) IsLoggedIn(c echo.Context) (bool, string, error) {
+    claims, ok := c.Get("userClaims").(jwt.MapClaims)
+	if !ok {
+		return false, "", c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token claims"})
+	}
+
+	email, ok := claims["sub"].(string)
+	if !ok {
+		return false, "", c.JSON(http.StatusBadRequest, map[string]string{"error": "Email (sub) claim not found in token"})
+    }
+
+    exists, err := s.UserExists(email)
+    if err != nil || !exists {
+        return false, "", err
+    }
+    return true, email, nil
 }
