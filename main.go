@@ -20,6 +20,8 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/facebook"
 )
 
 //go:embed all:frontend/dist
@@ -37,24 +39,41 @@ func main() {
 	twitterConsumerKey := os.Getenv("TWITTER_CONSUMER_KEY")
 	twitterConsumerSecret := os.Getenv("TWITTER_CONSUMER_SECRET")
 	twitterCallbackURL := os.Getenv("TWITTER_CALLBACK_URL")
+
+	metaAppID := os.Getenv("META_APP_ID")
+	metaAppSecret := os.Getenv("META_APP_SECRET")
+	metaRedirectURL := os.Getenv("META_REDIRECT_URL")
+	metaConfigurationID := os.Getenv("META_CONFIGURATION_ID")
+
 	supabaseURL := os.Getenv("SUPABASE_URL")
 	supabaseKey := os.Getenv("SUPABASE_KEY")
 
-	AuthorizeEndpoint := oauth1.Endpoint{
+	twitterEndpoint := oauth1.Endpoint{
 		RequestTokenURL: "https://api.twitter.com/oauth/request_token",
 		AuthorizeURL:    "https://api.twitter.com/oauth/authorize",
 		AccessTokenURL:  "https://api.twitter.com/oauth/access_token",
 	}
+
+	metaConfig := &oauth2.Config{
+  		ClientID:     metaAppID,
+  		ClientSecret: metaAppSecret,
+  		RedirectURL:  metaRedirectURL,
+  		Scopes:       []string{"email"},
+		Endpoint:     facebook.Endpoint,
+	}
+
+
 
 
 	twitterConfig := &oauth1.Config{
 		ConsumerKey:    twitterConsumerKey,
 		ConsumerSecret: twitterConsumerSecret,
 		CallbackURL:    twitterCallbackURL,
-		Endpoint: AuthorizeEndpoint,
+		Endpoint: twitterEndpoint,
 	}
 
 	const TWITTERCALLBACKPATH = "/twitter/link/callback"
+	const INSTAGRAMCALLBACKPATH = "/instagram/link/callback"
 
 	// --- Services and Handlers ---
 	userService := services.NewUserService(supabaseURL, supabaseKey, jwtSecret)
@@ -62,6 +81,8 @@ func main() {
 	twitterService := services.NewTwitterService(twitterConfig)
 	twitterHandler := handlers.NewTwitterHandler(twitterService, userService)
 	platformHandler := handlers.NewPlatformHandler(twitterService, userService)
+	instagramService := services.NewInstagramService(metaConfig, metaConfigurationID)
+	instagramHandler := handlers.NewInstagramHandler(instagramService, userService)
 
 	e := echo.New()
 
@@ -78,6 +99,7 @@ func main() {
 	apiGroup.Use(middlewares.JWTMiddleware(jwtSecret, []string{}))
 	routes.RegisterPlatformRoute(apiGroup, platformHandler)
 	routes.RegisterTwitterRoutes(apiGroup, twitterHandler)
+	routes.RegisterInstagramRoutes(apiGroup, instagramHandler)
 
 	e.GET(TWITTERCALLBACKPATH, twitterHandler.Callback)
 

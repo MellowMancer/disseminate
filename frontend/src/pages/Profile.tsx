@@ -4,7 +4,9 @@ import { toast } from 'sonner';
 
 const Profile: React.FC = () => {
     const [twitterLinked, setTwitterLinked] = useState<boolean | null>(null);
-    const [tokenValid, setTokenValid] = useState<boolean | null>(null);
+    const [instagramLinked, setInstagramLinked] = useState<boolean | null>(null);
+    const [twitterTokenValid, setTwitterTokenValid] = useState<boolean | null>(null);
+    const [instagramTokenValid, setInstagramTokenValid] = useState<boolean | null>(null);
     
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -17,11 +19,27 @@ const Profile: React.FC = () => {
             if (!response.ok) throw new Error('Network response was not ok');
             const data = await response.json();
             setTwitterLinked(data.twitterLinked);
-            setTokenValid(data.tokenValid);
+            setTwitterTokenValid(data.tokenValid);
         } catch (error) {
             console.error("Failed to fetch Twitter status:", error);
             setTwitterLinked(false);
-            setTokenValid(false);
+            setTwitterTokenValid(false);
+        }
+    }, []);
+
+    const fetchInstagramStatus = useCallback(async () => {
+        try {
+            const response = await fetch('/api/instagram/check', {
+                credentials: 'include',
+            });
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+            setInstagramLinked(data.instagramLinked);
+            setInstagramTokenValid(data.tokenValid);
+        } catch (error) {
+            console.error("Failed to fetch Instagram status:", error);
+            setInstagramLinked(false);
+            setInstagramTokenValid(false);
         }
     }, []);
 
@@ -30,7 +48,6 @@ const Profile: React.FC = () => {
         const provider = searchParams.get('provider');
 
         if (status && provider === 'twitter') {
-            // The toast function calls remain exactly the same
             if (status === 'success') {
                 toast.success('Successfully connected your Twitter account!');
                 fetchTwitterStatus(); 
@@ -51,14 +68,20 @@ const Profile: React.FC = () => {
         window.location.href = '/api/twitter/link/begin';
     };
 
+    useEffect(() => {
+        fetchInstagramStatus();
+    }, [fetchInstagramStatus]);
+
+
+
     const renderTwitterStatus = () => {
         if (twitterLinked === null) {
             return <p>Loading Twitter status...</p>;
         }
-        if (twitterLinked && tokenValid) {
+        if (twitterLinked && twitterTokenValid) {
             return <p style={{ color: 'green' }}>Twitter is connected and ready to post.</p>;
         }
-        if (twitterLinked && !tokenValid) {
+        if (twitterLinked && !twitterTokenValid) {
             return (
                 <>
                     <p style={{ color: 'orange' }}>Your Twitter connection has expired.</p>
@@ -69,6 +92,24 @@ const Profile: React.FC = () => {
         return <button onClick={handleTwitterLogin}>Connect Twitter</button>;
     };
 
+    const renderInstagramStatus = () => {
+        if (instagramLinked === null) {
+            return <p>Loading Instagram status...</p>;
+        }
+        if (instagramLinked && instagramTokenValid) {
+            return <p style={{ color: 'green' }}>Instagram is connected and ready to post.</p>;
+        }
+        if (instagramLinked && !instagramTokenValid) {
+            return (
+                <>
+                    <p style={{ color: 'orange' }}>Your Instagram connection has expired.</p>
+                    <button onClick={() => window.location.href = '/api/instagram/link/begin'}>Reauthorize Instagram</button>
+                </>
+            );
+        }
+        return <button onClick={() => window.location.href = '/api/instagram/link/begin'}>Connect Instagram</button>;
+    }
+
     return (
         <div>
             <h1>Profile Page</h1>
@@ -78,6 +119,7 @@ const Profile: React.FC = () => {
 
             <h3>Connections</h3>
             {renderTwitterStatus()}
+            {renderInstagramStatus()}
         </div>
     );
 };
