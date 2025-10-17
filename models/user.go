@@ -1,12 +1,24 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type User struct {
-	Email              string `json:"email"`
-	Password           string `json:"password"` // Store hashed password
-	TwitterAccessToken  *string `json:"twitter_access_token"`
-	TwitterAccessSecret *string `json:"twitter_access_secret"`
-	InstagramAccessToken *string `json:"instagram_access_token"`
-	InstagramTokenExpiresAt     *time.Time `json:"instagram_token_expires_at"`
+	Email                   string     `json:"email"`
+	Password                string     `json:"password"` // Store hashed password
+	
+}
+
+type TwitterModel struct {
+	UserID              string `json:"user_id"`
+	AccessToken  string   `json:"access_token"`
+	AccessSecret string   `json:"access_secret"`
+}
+
+type InstagramModel struct {
+	UserID              string `json:"user_id"`
+	InstagramID             string `json:"instagram_id"`
+	AccessToken    string    `json:"access_token"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
