@@ -42,67 +42,72 @@ export function Navbar() {
 
     return (
         <div className="flex items-center justify-center">
-        <NavigationMenu>
-            <NavigationMenuList>
-                <NavigationMenuItem>
-                    <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                        <button
-                            onClick={handleHomeButton}
-                            aria-label="Home"
-                            className="bg-transparent border-none p-0 m-0 cursor-pointer"
-                            type="button"
-                        >
-                            Home
-                        </button>
-                    </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                    <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                        <button
-                            onClick={handleAboutButton}
-                            aria-label="About"
-                            className="bg-transparent border-none p-0 m-0 cursor-pointer"
-                            type="button"
-                        >
-                            About
-                        </button>
-                    </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                    <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                        <button
-                            onClick={handleProfileButton}
-                            aria-label="Profile"
-                            className="bg-transparent border-none p-0 m-0 cursor-pointer"
-                            type="button"
-                        >
-                            Profile & Keys
-                        </button>
-                    </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                    <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                        {authenticated ? (<button
-                            onClick={handleLogout}
-                            aria-label="Logout"
-                            className="bg-transparent border-none p-0 m-0 cursor-pointer"
-                            type="button"
-                        >
-                            Logout
-                        </button>) : (<button
-                            onClick={handleLoginButton}
-                            aria-label="Login"
-                            className="bg-transparent border-none p-0 m-0 cursor-pointer"
-                            type="button"
-                        >
-                            Login
-                        </button>)
-                        }
-                    </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuIndicator className="NavigationMenuIndicator" />
-            </NavigationMenuList>
-        </NavigationMenu>
+            <NavigationMenu>
+                <NavigationMenuList>
+                    <NavigationMenuItem>
+                        <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                            <button
+                                onClick={handleHomeButton}
+                                aria-label="Home"
+                                className="bg-transparent border-none p-0 m-0 cursor-pointer"
+                                type="button"
+                            >
+                                Home
+                            </button>
+                        </NavigationMenuLink>
+                    </NavigationMenuItem>
+                    <NavigationMenuItem>
+                        <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                            <button
+                                onClick={handleAboutButton}
+                                aria-label="About"
+                                className="bg-transparent border-none p-0 m-0 cursor-pointer"
+                                type="button"
+                            >
+                                About
+                            </button>
+                        </NavigationMenuLink>
+                    </NavigationMenuItem>
+                    {authenticated ?
+                        <NavigationMenuItem>
+                            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+
+                                <button
+                                    onClick={handleProfileButton}
+                                    aria-label="Profile"
+                                    className="bg-transparent border-none p-0 m-0 cursor-pointer"
+                                    type="button"
+                                >
+                                    Profile & Keys
+                                </button>
+
+                            </NavigationMenuLink>
+                        </NavigationMenuItem>
+                        : <></>
+                    }
+                    <NavigationMenuItem>
+                        <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                            {authenticated ? (<button
+                                onClick={handleLogout}
+                                aria-label="Logout"
+                                className="bg-transparent border-none p-0 m-0 cursor-pointer"
+                                type="button"
+                            >
+                                Logout
+                            </button>) : (<button
+                                onClick={handleLoginButton}
+                                aria-label="Login"
+                                className="bg-transparent border-none p-0 m-0 cursor-pointer"
+                                type="button"
+                            >
+                                Login
+                            </button>)
+                            }
+                        </NavigationMenuLink>
+                    </NavigationMenuItem>
+                    <NavigationMenuIndicator className="NavigationMenuIndicator" />
+                </NavigationMenuList>
+            </NavigationMenu>
         </div>
     )
 }

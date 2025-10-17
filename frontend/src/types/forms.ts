@@ -1,11 +1,11 @@
 export type FormDataState = {
   importData: {};
-  twitter: { apiKey: string; apiSecret: string; accessToken: string; accessSecret: string; content: string };
-  youtube: { apiKey: string; accessToken: string; title: string; description: string; tags: string };
-  instagram: { username: string; password: string; caption: string };
-  reddit: { clientId: string; clientSecret: string; username: string; password: string; subreddit: string; title: string; content: string };
-  mastodon: { instanceUrl: string; accessToken: string; content: string };
-  artstation: { username: string; password: string; title: string; description: string };
+  twitter: { content: string };
+  youtube: { description: string; tags: string };
+  instagram: { caption: string };
+  reddit: {  };
+  mastodon: {  };
+  artstation: {  };
 };
 
 // This type defines the props for our modular tab components
