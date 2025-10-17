@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
@@ -21,7 +22,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/facebook"
 )
 
 //go:embed all:frontend/dist
@@ -40,10 +40,13 @@ func main() {
 	twitterConsumerSecret := os.Getenv("TWITTER_CONSUMER_SECRET")
 	twitterCallbackURL := os.Getenv("TWITTER_CALLBACK_URL")
 
-	metaAppID := os.Getenv("META_APP_ID")
-	metaAppSecret := os.Getenv("META_APP_SECRET")
-	metaRedirectURL := os.Getenv("META_REDIRECT_URL")
-	metaConfigurationID := os.Getenv("META_CONFIGURATION_ID")
+	// metaAppID := os.Getenv("META_APP_ID")
+	// metaAppSecret := os.Getenv("META_APP_SECRET")
+	// metaRedirectURL := os.Getenv("META_REDIRECT_URL")
+	// metaConfigurationID := os.Getenv("META_CONFIGURATION_ID")
+	instagramClientID := os.Getenv("INSTAGRAM_APP_ID")
+	instagramClientSecret := os.Getenv("INSTAGRAM_APP_SECRET")
+	instagramRedirectURL := os.Getenv("INSTAGRAM_REDIRECT_URL")
 
 	supabaseURL := os.Getenv("SUPABASE_URL")
 	supabaseKey := os.Getenv("SUPABASE_KEY")
@@ -54,22 +57,24 @@ func main() {
 		AccessTokenURL:  "https://api.twitter.com/oauth/access_token",
 	}
 
-	metaConfig := &oauth2.Config{
-  		ClientID:     metaAppID,
-  		ClientSecret: metaAppSecret,
-  		RedirectURL:  metaRedirectURL,
-  		Scopes:       []string{"email"},
-		Endpoint:     facebook.Endpoint,
-	}
-
-
-
-
 	twitterConfig := &oauth1.Config{
 		ConsumerKey:    twitterConsumerKey,
 		ConsumerSecret: twitterConsumerSecret,
 		CallbackURL:    twitterCallbackURL,
-		Endpoint: twitterEndpoint,
+		Endpoint:       twitterEndpoint,
+	}
+
+	instagramEndpoint := oauth2.Endpoint{
+		AuthURL:  fmt.Sprintf("https://www.instagram.com/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=instagram_business_basic,instagram_business_content_publish&force_reauth=true", instagramClientID, instagramRedirectURL),
+		TokenURL: "https://api.instagram.com/oauth/access_token",
+	}
+
+	instagramConfig := &oauth2.Config{
+		ClientID:     instagramClientID,
+		ClientSecret: instagramClientSecret,
+		RedirectURL:  instagramRedirectURL,
+		Scopes: []string{"instagram_business_basic,instagram_content_publish"},
+		Endpoint: instagramEndpoint,
 	}
 
 	const TWITTERCALLBACKPATH = "/twitter/link/callback"
@@ -81,7 +86,7 @@ func main() {
 	twitterService := services.NewTwitterService(twitterConfig)
 	twitterHandler := handlers.NewTwitterHandler(twitterService, userService)
 	platformHandler := handlers.NewPlatformHandler(twitterService, userService)
-	instagramService := services.NewInstagramService(metaConfig, metaConfigurationID)
+	instagramService := services.NewInstagramService(instagramConfig)
 	instagramHandler := handlers.NewInstagramHandler(instagramService, userService)
 
 	e := echo.New()
@@ -102,6 +107,7 @@ func main() {
 	routes.RegisterInstagramRoutes(apiGroup, instagramHandler)
 
 	e.GET(TWITTERCALLBACKPATH, twitterHandler.Callback)
+	e.GET(INSTAGRAMCALLBACKPATH, instagramHandler.Callback)
 
 	if appEnv == "production" {
 		// --- PRODUCTION MODE ---
@@ -115,7 +121,7 @@ func main() {
 			Skipper: func(c echo.Context) bool {
 				path := c.Request().URL.Path
 				// Skip static file serving for API routes
-				return strings.HasPrefix(path, "/api") || strings.HasPrefix(path, "/auth") || strings.HasPrefix(path, TWITTERCALLBACKPATH)
+				return strings.HasPrefix(path, "/api") || strings.HasPrefix(path, "/auth") || strings.HasPrefix(path, TWITTERCALLBACKPATH) || strings.HasPrefix(path, INSTAGRAMCALLBACKPATH)
 			},
 			Filesystem: http.FS(staticFilesFS),
 			HTML5:      true, // Crucial for SPAs
@@ -132,7 +138,7 @@ func main() {
 			Skipper: func(c echo.Context) bool {
 				path := c.Request().URL.Path
 				// Skip proxying for API routes, let them be handled by Echo
-				return strings.HasPrefix(path, "/api") || strings.HasPrefix(path, "/auth") || strings.HasPrefix(path, TWITTERCALLBACKPATH)
+				return strings.HasPrefix(path, "/api") || strings.HasPrefix(path, "/auth") || strings.HasPrefix(path, TWITTERCALLBACKPATH) || strings.HasPrefix(path, INSTAGRAMCALLBACKPATH)
 			},
 			Balancer: middleware.NewRoundRobinBalancer([]*middleware.ProxyTarget{
 				{

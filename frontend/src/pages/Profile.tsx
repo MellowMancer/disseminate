@@ -11,6 +11,10 @@ const Profile: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
 
+    const handleTwitterLogin = () => {
+        window.location.href = '/api/twitter/link/begin';
+    };
+
     const fetchTwitterStatus = useCallback(async () => {
         try {
             const response = await fetch('/api/twitter/check', {
@@ -19,7 +23,7 @@ const Profile: React.FC = () => {
             if (!response.ok) throw new Error('Network response was not ok');
             const data = await response.json();
             setTwitterLinked(data.twitterLinked);
-            setTwitterTokenValid(data.tokenValid);
+            setTwitterTokenValid(data.twitterTokenValid);
         } catch (error) {
             console.error("Failed to fetch Twitter status:", error);
             setTwitterLinked(false);
@@ -35,7 +39,7 @@ const Profile: React.FC = () => {
             if (!response.ok) throw new Error('Network response was not ok');
             const data = await response.json();
             setInstagramLinked(data.instagramLinked);
-            setInstagramTokenValid(data.tokenValid);
+            setInstagramTokenValid(data.instagramTokenValid);
         } catch (error) {
             console.error("Failed to fetch Instagram status:", error);
             setInstagramLinked(false);
@@ -49,24 +53,23 @@ const Profile: React.FC = () => {
 
         if (status && provider === 'twitter') {
             if (status === 'success') {
-                toast.success('Successfully connected your Twitter account!');
+                toast.success('Successfully connected your account!');
                 fetchTwitterStatus(); 
             } else if (status === 'denied') {
-                toast.error('Authorization was denied for Twitter.');
+                toast.error('Authorization was denied');
             } else if (status === 'error') {
                 const code = searchParams.get('code') || 'Unknown error';
-                toast.error(`Failed to connect Twitter: ${code}`);
+                toast.error(`Failed to connect: ${code}`);
             }
             
             navigate('/profile', { replace: true });
-        } else {
+        }
+        else {
             fetchTwitterStatus();
         }
     }, [fetchTwitterStatus, navigate, searchParams]);
 
-    const handleTwitterLogin = () => {
-        window.location.href = '/api/twitter/link/begin';
-    };
+    
 
     useEffect(() => {
         fetchInstagramStatus();

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"backend/services"
+	
 	"fmt"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -45,7 +46,7 @@ func (h *TwitterHandler) BeginTwitterLink(c echo.Context) error {
 	sess.Values["userEmail"] = email
 	sess.Save(c.Request(), c.Response())
 
-	// TO-DO: eturn the URL instead of redirecting from the backend.
+	// TO-DO: return the URL instead of redirecting from the backend.
 	// The frontend can then open it in a popup.
 	// return c.JSON(http.StatusOK, map[string]string{"authorization_url": authURL})
 
@@ -138,13 +139,13 @@ func (h *TwitterHandler) CheckTwitterToken(c echo.Context) error {
 	if err != nil || accessToken == "" || accessSecret == "" {
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"twitterLinked": false,
-			"tokenValid":    false,
+			"twitterTokenValid":    false,
 		})
 	}
 
 	valid, err := h.twitterService.CheckTokensValid(accessToken, accessSecret)
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"twitterLinked": true,
-		"tokenValid":    valid && err == nil,
+		"twitterTokenValid":    valid && err == nil,
 	})
 }
