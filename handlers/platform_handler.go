@@ -49,7 +49,7 @@ func (h *PlatformHandler) PostToPlatform(c echo.Context) error {
 
 	switch platform {
 	case "twitter":
-		accessToken, accessSecret, err := h.userService.GetTwitterTokens(email)
+		accessToken, accessSecret, err := h.userService.GetTwitterToken(email)
 		if err != nil || accessToken == "" || accessSecret == "" {
 			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Twitter account not linked or tokens are missing"})
 		}

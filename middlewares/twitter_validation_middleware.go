@@ -7,13 +7,13 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func TwitterTokenValidationMiddleware(twitterService services.TwitterService, userService services.UserService) echo.MiddlewareFunc {
+func TwitterValidationMiddleware(twitterService services.TwitterService, userService services.UserService) echo.MiddlewareFunc {
     return func(next echo.HandlerFunc) echo.HandlerFunc {
         return func(c echo.Context) error {
             claims := c.Get("userClaims").(jwt.MapClaims)
             email := claims["email"].(string)
 
-            accessToken, accessSecret, err := userService.GetTwitterTokens(email)
+            accessToken, accessSecret, err := userService.GetTwitterToken(email)
             if err != nil {
                 return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Twitter tokens missing"})
             }

@@ -73,7 +73,7 @@ func (h *InstagramHandler) CheckInstagramToken(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not logged in"})
 	}
 	
-	accessToken, err := h.userService.GetInstagramTokens(email)
+	accessToken, err := h.userService.GetInstagramToken(email)
 	if err != nil || accessToken == "" {
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"instagramLinked": false,
@@ -127,7 +127,7 @@ func (h *InstagramHandler) Callback(c echo.Context) error {
 	}
 	log.Println(email)
 
-	err = h.userService.LinkInstagramAccount(email, token, expiresIn)
+	err = h.userService.SaveInstagramToken(email, token, expiresIn)
 	if err != nil {
 		return fmt.Errorf("failed to link instagram to your account")
 	}
