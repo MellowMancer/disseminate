@@ -4,7 +4,6 @@ import (
 	"backend/models"
 	"backend/repositories"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -12,20 +11,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const api_path = "/rest/v1/"
-const profile_path = "profiles"
-
-type UserIDResponse struct {
-	ID string `json:"id"`
-}
-
 type UserService interface {
 	CreateUser(user *models.User) error
 	LoginUser(user *models.User) (string, error)
 	GetJWTSecret() []byte
+	IsLoggedIn(c echo.Context) (bool, string, error)
 	SaveTwitterToken(email string, accessToken string, accessSecret string) error
 	GetTwitterToken(email string) (string, string, error)
-	IsLoggedIn(c echo.Context) (bool, string, error)
 	SaveInstagramToken(email string, accessToken string, expiresIn int) error
 	GetInstagramToken(email string) (string, error)
 }
@@ -85,12 +77,12 @@ func (s *userServiceImpl) GetJWTSecret() []byte {
 func (s *userServiceImpl) IsLoggedIn(c echo.Context) (bool, string, error) {
 	claims, ok := c.Get("userClaims").(jwt.MapClaims)
 	if !ok {
-		return false, "", c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token claims"})
+		return false, "", fmt.Errorf("Invalid token claims")
 	}
 
 	email, ok := claims["sub"].(string)
 	if !ok {
-		return false, "", c.JSON(http.StatusBadRequest, map[string]string{"error": "Email (sub) claim not found in token"})
+		return false, "", fmt.Errorf("Email (sub) claim not found in token")
 	}
 
 	exists, err := s.repository.ExistsByEmail(email)

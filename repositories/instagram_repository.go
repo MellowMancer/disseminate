@@ -12,12 +12,6 @@ import (
 	"time"
 )
 
-type InstagramRepository interface {
-	SaveInstagramToken(userID string, instagramID string, accessToken string, expirationTime time.Time) error
-	GetInstagramToken(userID string) (string, error)
-	GetInstagramID(accessToken string) (string, error)
-}
-
 func (r *SupabaseRepository) SaveInstagramToken(userID string, instagramID string, accessToken string, expirationTime time.Time) error {
 	payload := models.InstagramModel{
 		UserID:      userID,
@@ -126,4 +120,48 @@ func (r *SupabaseRepository) GetInstagramID(accessToken string) (string, error) 
 	}
 
 	return result.ID, nil
+}
+
+func (r *SupabaseRepository) GetAccessToken(URL string, accessToken string, clientSecret string) (string, int, error) {
+	req, err := http.NewRequest("GET", URL, nil)
+    if err != nil {
+        return "", 0, err
+    }
+
+    q := req.URL.Query()
+    q.Add("grant_type", "ig_exchange_token")
+    q.Add("client_secret", clientSecret)
+    q.Add("access_token", accessToken)
+    req.URL.RawQuery = q.Encode()
+
+    resp, err := http.DefaultClient.Do(req)
+    if err != nil {
+        return "", 0, err
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        body, _ := io.ReadAll(resp.Body)
+        return "", 0, fmt.Errorf("instagram token exchange failed: status %d: %s", resp.StatusCode, string(body))
+    }
+
+    var longToken struct {
+        AccessToken string `json:"access_token"`
+        TokenType   string `json:"token_type"`
+        ExpiresIn   int    `json:"expires_in"`
+    }
+
+    if err = json.NewDecoder(resp.Body).Decode(&longToken); err != nil {
+        return "", 0, err
+    }
+
+    return longToken.AccessToken, longToken.ExpiresIn, nil
+}
+
+func (r *SupabaseRepository) CheckInstagramTokens(accessToken string) error {
+	resp, err := http.Get("https://graph.instagram.com/me?access_token=" + accessToken)
+    if err != nil || resp.StatusCode != 200 {
+        return fmt.Errorf("tokens have been revoked, please connect your account again")
+    }
+	return nil
 }

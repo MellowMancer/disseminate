@@ -12,26 +12,6 @@ import (
 	"net/url"
 )
 
-type UserRepository interface {
-    Create(user *models.User) error
-    FindByEmail(email string) (*models.User, error)
-    ExistsByEmail(email string) (bool, error)
-    UserIDByEmail(email string) (string, error)
-}
-
-type SupabaseRepository struct {
-	supabaseKey string
-	supabaseURL string
-	httpClient *http.Client
-}
-
-func NewSupabaseRepository(supabaseUrl, supabaseKey string) *SupabaseRepository {
-	return &SupabaseRepository{
-		supabaseKey: supabaseKey,
-		supabaseURL: supabaseUrl,
-		httpClient: &http.Client{},
-	}
-}
 
 const api_path = "/rest/v1/"
 const profile_path = "profiles"
@@ -39,7 +19,6 @@ const profile_path = "profiles"
 type UserIDResponse struct {
 	ID string `json:"id"`
 }
-
 
 func (r *SupabaseRepository) Create(user *models.User) error {
 	supabaseUserData := models.User{
@@ -52,15 +31,7 @@ func (r *SupabaseRepository) Create(user *models.User) error {
 	}
 	
 	url := r.supabaseURL + api_path + profile_path
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("apikey", r.supabaseKey)
-	req.Header.Set("Authorization", "Bearer "+r.supabaseKey)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Prefer", "return=representation")
+	req, err := r.newRequest("POST", url, bytes.NewBuffer(data))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -78,40 +49,38 @@ func (r *SupabaseRepository) Create(user *models.User) error {
 
 func (r *SupabaseRepository) FindByEmail(email string) (*models.User, error) {
 	url := r.supabaseURL + api_path + profile_path + "?email=eq." + url.QueryEscape(email)
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := r.newRequest("GET", url, nil)
 	if err != nil {
-		return &models.User{}, err
+		return nil, err
 	}
-
-	req.Header.Set("apikey", r.supabaseKey)
-	req.Header.Set("Authorization", "Bearer "+r.supabaseKey)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return &models.User{}, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return &models.User{}, fmt.Errorf("login failed, status: %d, response: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("login failed, status: %d, response: %s", resp.StatusCode, string(body))
 	}
 
 	var users []models.User
 	if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
-		return &models.User{}, err
+		return nil, err
 	}
 	if len(users) == 0 {
-		return &models.User{}, fmt.Errorf("user not found")
+		return nil, fmt.Errorf("user not found")
 	}
 
 	return &users[0], nil
 }
 
 func (r *SupabaseRepository) ExistsByEmail(email string) (bool, error) {
-	req, _ := http.NewRequest("GET", r.supabaseURL+api_path+profile_path+"?email=eq."+email, nil)
-	req.Header.Set("apikey", r.supabaseKey)
-	req.Header.Set("Authorization", "Bearer "+r.supabaseKey)
+	req, err := r.newRequest("GET", r.supabaseURL+api_path+profile_path+"?email=eq."+email, nil)
+	if err != nil {
+		return false, err
+	}
 
 	resp, err := r.httpClient.Do(req)
 	if err != nil {
@@ -128,15 +97,10 @@ func (r *SupabaseRepository) ExistsByEmail(email string) (bool, error) {
 func (r *SupabaseRepository) UserIDByEmail(email string) (string, error) {
 	url := r.supabaseURL + api_path + profile_path + "?email=eq." + url.QueryEscape(email) + "&select=id"
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := r.newRequest("GET", url, nil)
 	if err != nil {
 		return "", err
 	}
-
-	req.Header.Set("apikey", r.supabaseKey)
-	req.Header.Set("Authorization", "Bearer "+r.supabaseKey)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Prefer", "return=representation")
 
 	resp, err := r.httpClient.Do(req)
 	if err != nil {
@@ -162,3 +126,20 @@ func (r *SupabaseRepository) UserIDByEmail(email string) (string, error) {
 	return userID, nil
 }
 
+
+
+
+func (r *SupabaseRepository) newRequest(method, url string, body io.Reader) (*http.Request, error) {
+    req, err := http.NewRequest(method, url, body)
+    if err != nil {
+        return nil, err
+    }
+    req.Header.Set("apikey", r.supabaseKey)
+    req.Header.Set("Authorization", "Bearer "+r.supabaseKey)
+
+	if(method != "GET") {
+    req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("Prefer", "return=representation")
+	}
+    return req, nil
+}

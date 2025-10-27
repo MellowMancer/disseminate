@@ -86,7 +86,7 @@ func main() {
 
 	userService := services.NewUserService(repository, jwtSecret)
 	userHandler := handlers.NewHandler(userService)
-	twitterService := services.NewTwitterService(twitterConfig)
+	twitterService := services.NewTwitterService(repository, twitterConfig)
 	twitterHandler := handlers.NewTwitterHandler(twitterService, userService)
 	platformHandler := handlers.NewPlatformHandler(twitterService, userService)
 	instagramService := services.NewInstagramService(instagramConfig)
