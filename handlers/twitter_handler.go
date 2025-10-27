@@ -112,7 +112,7 @@ func (h *TwitterHandler) Callback(c echo.Context) error {
 
 	// 7. Call the user service to update the database
 	log.Println("[CALLBACK_TRACE] Attempting Step 7: Calling LinkTwitterAccount in user service...")
-	err = h.userService.LinkTwitterAccount(email, accessToken, accessSecret)
+	err = h.userService.SaveTwitterToken(email, accessToken, accessSecret)
 	if err != nil {
 		log.Printf("[CALLBACK_TRACE] FATAL: Step 7 failed. Error from LinkTwitterAccount: %v", err)
 		redirectURL := fmt.Sprintf("%s?status=error&provider=twitter&code=db_link_failed", profilePath)
@@ -135,7 +135,7 @@ func (h *TwitterHandler) CheckTwitterToken(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not logged in"})
 	}
 	
-	accessToken, accessSecret, err := h.userService.GetTwitterTokens(email)
+	accessToken, accessSecret, err := h.userService.GetTwitterToken(email)
 	if err != nil || accessToken == "" || accessSecret == "" {
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"twitterLinked": false,

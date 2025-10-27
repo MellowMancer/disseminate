@@ -12,6 +12,7 @@ import (
 
 	"backend/handlers"
 	"backend/middlewares"
+	"backend/repositories"
 	"backend/routes"
 	"backend/services"
 
@@ -81,7 +82,9 @@ func main() {
 	const INSTAGRAMCALLBACKPATH = "/instagram/link/callback"
 
 	// --- Services and Handlers ---
-	userService := services.NewUserService(supabaseURL, supabaseKey, jwtSecret)
+	repository := repositories.NewSupabaseRepository(supabaseURL, supabaseKey)
+
+	userService := services.NewUserService(repository, jwtSecret)
 	userHandler := handlers.NewHandler(userService)
 	twitterService := services.NewTwitterService(twitterConfig)
 	twitterHandler := handlers.NewTwitterHandler(twitterService, userService)
