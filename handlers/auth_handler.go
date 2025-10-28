@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 	"backend/models"
-	"backend/services"
+	service_user "backend/services/user"
     "github.com/labstack/echo-contrib/session"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
@@ -13,10 +13,10 @@ import (
 
 
 type Handler struct {
-	UserService services.UserService
+	UserService service_user.UserService
 }
 
-func NewHandler(userService services.UserService) *Handler {
+func NewHandler(userService service_user.UserService) *Handler {
 	return &Handler{UserService: userService}
 }
 

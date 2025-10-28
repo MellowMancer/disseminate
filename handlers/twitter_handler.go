@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"backend/services"
-	
+	service_twitter "backend/services/twitter"
+	service_user "backend/services/user"
 	"fmt"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -11,11 +11,11 @@ import (
 )
 
 type TwitterHandler struct {
-	twitterService services.TwitterService
-	userService    services.UserService
+	twitterService service_twitter.TwitterService
+	userService    service_user.UserService
 }
 
-func NewTwitterHandler(twitterService services.TwitterService, userService services.UserService) *TwitterHandler {
+func NewTwitterHandler(twitterService service_twitter.TwitterService, userService service_user.UserService) *TwitterHandler {
 	return &TwitterHandler{
 		twitterService: twitterService,
 		userService:    userService,

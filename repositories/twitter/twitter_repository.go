@@ -1,4 +1,4 @@
-package repositories
+package twitter
 
 import (
 	"backend/models"
@@ -10,6 +10,7 @@ import (
 	"log"
 	"strconv"
 	"mime/multipart"
+	repo_supabase "backend/repositories/supabase"
 )
 
 type v2StatusResponse struct {
@@ -31,8 +32,28 @@ type v2InitResponse struct {
 	} `json:"data"`
 }
 
+type TwitterRepository interface {
+	SaveToken(userID string, accessToken string, accessSecret string) error
+	GetToken(userID string) (string, string, error)
+	CheckTokens(client *http.Client) (bool, error)
+	InitUpload(httpClient *http.Client, mediaData []byte, mediaType string, mediaCategory string) (string, error)
+	AppendUpload(httpClient *http.Client, mediaID string, mediaData []byte, segmentIndex int) (int, error)
+	FinalizeUpload(httpClient *http.Client, mediaID string) error
+	StatusUpload(httpClient *http.Client, mediaID string) (*v2StatusResponse, error)
+	PostTweet(client *http.Client, postURL string, payload map[string]interface{}) error
+}
 
-func (r *SupabaseRepository) SaveTwitterToken(userID string, accessToken string, accessSecret string) error {
+type twitterRepositoryImpl struct {
+	repo_supabase *repo_supabase.SupabaseRepository
+}
+
+func NewTwitterRepository(supabaseRepository *repo_supabase.SupabaseRepository) TwitterRepository {
+	return &twitterRepositoryImpl{
+		repo_supabase: supabaseRepository,
+	}
+}
+
+func (t *twitterRepositoryImpl) SaveToken(userID string, accessToken string, accessSecret string) error {
     payload := map[string]string{
         "user_id":      userID,
         "access_token": accessToken,
@@ -42,16 +63,16 @@ func (r *SupabaseRepository) SaveTwitterToken(userID string, accessToken string,
     if err != nil {
         return err
     }
-    url := r.supabaseURL + api_path + "twitter"
+    url := t.repo_supabase.SupabaseURL + "twitter"
     req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
     if err != nil {
         return err
     }
-    req.Header.Set("apikey", r.supabaseKey)
-    req.Header.Set("Authorization", "Bearer "+r.supabaseKey)
+    req.Header.Set("apikey", t.repo_supabase.SupabaseKey)
+    req.Header.Set("Authorization", "Bearer "+t.repo_supabase.SupabaseKey)
     req.Header.Set("Content-Type", "application/json")
     req.Header.Set("Prefer", "return=representation")
-    resp, err := r.httpClient.Do(req)
+    resp, err := http.DefaultClient.Do(req)
     if err != nil {
         return err
     }
@@ -63,10 +84,10 @@ func (r *SupabaseRepository) SaveTwitterToken(userID string, accessToken string,
     return nil
 }
 
-func (r *SupabaseRepository) GetTwitterToken(userID string) (string, string, error) {
-	req, _ := http.NewRequest("GET", r.supabaseURL+api_path+"twitter", nil)
-	req.Header.Set("apikey", r.supabaseKey)
-	req.Header.Set("Authorization", "Bearer "+r.supabaseKey)
+func (t *twitterRepositoryImpl) GetToken(userID string) (string, string, error) {
+	req, _ := http.NewRequest("GET", t.repo_supabase.SupabaseURL + "twitter", nil)
+	req.Header.Set("apikey", t.repo_supabase.SupabaseKey)
+	req.Header.Set("Authorization", "Bearer "+t.repo_supabase.SupabaseKey)
 
 	q := req.URL.Query()
 	q.Add("user_id", "eq."+userID)
@@ -96,7 +117,7 @@ func (r *SupabaseRepository) GetTwitterToken(userID string) (string, string, err
 	return twitterModel[0].AccessToken, twitterModel[0].AccessSecret, nil
 }
 
-func (r *SupabaseRepository) CheckTwitterTokens(client *http.Client) (bool, error) {
+func (t *twitterRepositoryImpl) CheckTokens(client *http.Client) (bool, error) {
 	resp, err := client.Get("https://api.twitter.com/1.1/account/verify_credentials.json")
 	if err != nil {
 		return false, err
@@ -113,7 +134,7 @@ func (r *SupabaseRepository) CheckTwitterTokens(client *http.Client) (bool, erro
 	}
 }
 
-func (r *SupabaseRepository) InitUpload(httpClient *http.Client, mediaData []byte, mediaType string, mediaCategory string) (string, error) {
+func (t *twitterRepositoryImpl) InitUpload(httpClient *http.Client, mediaData []byte, mediaType string, mediaCategory string) (string, error) {
 	log.Println("--- twitterService.initUpload: START ---")
 
 	const initializeURL = "https://api.x.com/2/media/upload/initialize"
@@ -167,7 +188,7 @@ func (r *SupabaseRepository) InitUpload(httpClient *http.Client, mediaData []byt
 	return initResp.Data.ID, nil
 }
 
-func (r *SupabaseRepository) AppendUpload(httpClient *http.Client, mediaID string, mediaData []byte, segmentIndex int) (int, error) {
+func (t *twitterRepositoryImpl) AppendUpload(httpClient *http.Client, mediaID string, mediaData []byte, segmentIndex int) (int, error) {
 	appendURL := fmt.Sprintf("https://api.x.com/2/media/upload/%s/append", mediaID)
 
 	body := &bytes.Buffer{}
@@ -220,7 +241,7 @@ func (r *SupabaseRepository) AppendUpload(httpClient *http.Client, mediaID strin
 	return resp.StatusCode, nil
 }
 
-func (r *SupabaseRepository) FinalizeUpload(httpClient *http.Client, mediaID string) error {
+func (t *twitterRepositoryImpl) FinalizeUpload(httpClient *http.Client, mediaID string) error {
 	log.Println("--- twitterService.finalizeUpload: START ---")
 	finalizeURL := fmt.Sprintf("https://api.x.com/2/media/upload/%s/finalize", mediaID)
 
@@ -247,7 +268,7 @@ func (r *SupabaseRepository) FinalizeUpload(httpClient *http.Client, mediaID str
 	return nil
 }
 
-func (r *SupabaseRepository) StatusUpload(httpClient *http.Client, mediaID string) (*v2StatusResponse, error) {
+func (t *twitterRepositoryImpl) StatusUpload(httpClient *http.Client, mediaID string) (*v2StatusResponse, error) {
 	log.Println("--- twitterService.statusUpload: START ---")
 	statusURL := "https://api.x.com/2/media/upload"
 
@@ -285,7 +306,7 @@ func (r *SupabaseRepository) StatusUpload(httpClient *http.Client, mediaID strin
 	return &statusResp, nil
 }
 
-func (r *SupabaseRepository) PostTweet(client *http.Client, postURL string, payload map[string]interface{}) error {
+func (t *twitterRepositoryImpl) PostTweet(client *http.Client, postURL string, payload map[string]interface{}) error {
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal tweet payload: %w", err)
