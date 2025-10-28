@@ -1,7 +1,8 @@
-package repositories
+package user
 
 import (
 	"backend/models"
+	repo_supabase "backend/repositories/supabase"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -12,15 +13,30 @@ import (
 	"net/url"
 )
 
-
-const api_path = "/rest/v1/"
 const profile_path = "profiles"
 
 type UserIDResponse struct {
 	ID string `json:"id"`
 }
 
-func (r *SupabaseRepository) Create(user *models.User) error {
+type UserRepository interface {
+	Create(user *models.User) error
+	FindByEmail(email string) (*models.User, error)
+	ExistsByEmail(email string) (bool, error)
+	UserIDByEmail(email string) (string, error)
+}
+
+type userRepositoryImpl struct {
+	repo_supabase *repo_supabase.SupabaseRepository
+}
+
+func NewUserRepository(supabaseRepository *repo_supabase.SupabaseRepository) UserRepository {
+	return &userRepositoryImpl{
+		repo_supabase: supabaseRepository,
+	}
+}
+
+func (u *userRepositoryImpl) Create(user *models.User) error {
 	supabaseUserData := models.User{
 		Email:    user.Email,
 		Password: user.Password,
@@ -30,8 +46,8 @@ func (r *SupabaseRepository) Create(user *models.User) error {
 		return err
 	}
 	
-	url := r.supabaseURL + api_path + profile_path
-	req, err := r.newRequest("POST", url, bytes.NewBuffer(data))
+	url := u.repo_supabase.SupabaseURL + profile_path
+	req, err := u.newRequest("POST", url, bytes.NewBuffer(data))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -47,9 +63,9 @@ func (r *SupabaseRepository) Create(user *models.User) error {
 	return nil
 }
 
-func (r *SupabaseRepository) FindByEmail(email string) (*models.User, error) {
-	url := r.supabaseURL + api_path + profile_path + "?email=eq." + url.QueryEscape(email)
-	req, err := r.newRequest("GET", url, nil)
+func (u *userRepositoryImpl) FindByEmail(email string) (*models.User, error) {
+	url := u.repo_supabase.SupabaseURL + profile_path + "?email=eq." + url.QueryEscape(email)
+	req, err := u.newRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -76,13 +92,13 @@ func (r *SupabaseRepository) FindByEmail(email string) (*models.User, error) {
 	return &users[0], nil
 }
 
-func (r *SupabaseRepository) ExistsByEmail(email string) (bool, error) {
-	req, err := r.newRequest("GET", r.supabaseURL+api_path+profile_path+"?email=eq."+email, nil)
+func (u *userRepositoryImpl) ExistsByEmail(email string) (bool, error) {
+	req, err := u.newRequest("GET", u.repo_supabase.SupabaseURL+profile_path+"?email=eq."+email, nil)
 	if err != nil {
 		return false, err
 	}
 
-	resp, err := r.httpClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return false, err
 	}
@@ -94,15 +110,15 @@ func (r *SupabaseRepository) ExistsByEmail(email string) (bool, error) {
 	return len(users) > 0, nil
 }
 
-func (r *SupabaseRepository) UserIDByEmail(email string) (string, error) {
-	url := r.supabaseURL + api_path + profile_path + "?email=eq." + url.QueryEscape(email) + "&select=id"
+func (u *userRepositoryImpl) UserIDByEmail(email string) (string, error) {
+	url := u.repo_supabase.SupabaseURL + profile_path + "?email=eq." + url.QueryEscape(email) + "&select=id"
 
-	req, err := r.newRequest("GET", url, nil)
+	req, err := u.newRequest("GET", url, nil)
 	if err != nil {
 		return "", err
 	}
 
-	resp, err := r.httpClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -129,13 +145,13 @@ func (r *SupabaseRepository) UserIDByEmail(email string) (string, error) {
 
 
 
-func (r *SupabaseRepository) newRequest(method, url string, body io.Reader) (*http.Request, error) {
+func (u *userRepositoryImpl) newRequest(method, url string, body io.Reader) (*http.Request, error) {
     req, err := http.NewRequest(method, url, body)
     if err != nil {
         return nil, err
     }
-    req.Header.Set("apikey", r.supabaseKey)
-    req.Header.Set("Authorization", "Bearer "+r.supabaseKey)
+    req.Header.Set("apikey", u.repo_supabase.SupabaseKey)
+    req.Header.Set("Authorization", "Bearer "+u.repo_supabase.SupabaseKey)
 
 	if(method != "GET") {
     req.Header.Set("Content-Type", "application/json")

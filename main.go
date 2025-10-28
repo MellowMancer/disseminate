@@ -12,9 +12,14 @@ import (
 
 	"backend/handlers"
 	"backend/middlewares"
-	"backend/repositories"
+	repo_instagram "backend/repositories/instagram"
+	repo_supabase "backend/repositories/supabase"
+	repo_twitter "backend/repositories/twitter"
+	repo_user "backend/repositories/user"
 	"backend/routes"
-	"backend/services"
+	service_instagram "backend/services/instagram"
+	service_twitter "backend/services/twitter"
+	service_user "backend/services/user"
 
 	"github.com/dghubble/oauth1"
 	"github.com/gorilla/sessions"
@@ -82,15 +87,21 @@ func main() {
 	const INSTAGRAMCALLBACKPATH = "/instagram/link/callback"
 
 	// --- Services and Handlers ---
-	repository := repositories.NewSupabaseRepository(supabaseURL, supabaseKey)
+	supabaseRepository := repo_supabase.NewSupabaseRepository(supabaseURL, supabaseKey)
+	userRepository := repo_user.NewUserRepository(supabaseRepository)
+	twitterRepository := repo_twitter.NewTwitterRepository(supabaseRepository)
+	instagramRepository := repo_instagram.NewInstagramRepository(supabaseRepository) 
 
-	userService := services.NewUserService(repository, jwtSecret)
+	userService := service_user.NewUserService(userRepository, instagramRepository, twitterRepository, jwtSecret)
 	userHandler := handlers.NewHandler(userService)
-	twitterService := services.NewTwitterService(repository, twitterConfig)
+
+	twitterService := service_twitter.NewTwitterService(twitterRepository, twitterConfig)
 	twitterHandler := handlers.NewTwitterHandler(twitterService, userService)
-	platformHandler := handlers.NewPlatformHandler(twitterService, userService)
-	instagramService := services.NewInstagramService(instagramConfig)
+	
+	instagramService := service_instagram.NewInstagramService(instagramConfig, instagramRepository)
 	instagramHandler := handlers.NewInstagramHandler(instagramService, userService)
+
+	platformHandler := handlers.NewPlatformHandler(twitterService, instagramService, userService)
 
 	e := echo.New()
 

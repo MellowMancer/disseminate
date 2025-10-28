@@ -1,7 +1,8 @@
 package handlers
 
 import (
-	"backend/services"
+	service_instagram "backend/services/instagram"
+	service_user "backend/services/user"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -12,11 +13,11 @@ import (
 )
 
 type InstagramHandler struct {
-	instagramService services.InstagramService
-	userService      services.UserService
+	instagramService service_instagram.InstagramService
+	userService      service_user.UserService
 }
 
-func NewInstagramHandler(instagramService services.InstagramService, userService services.UserService) *InstagramHandler {
+func NewInstagramHandler(instagramService service_instagram.InstagramService, userService service_user.UserService) *InstagramHandler {
 	return &InstagramHandler{
 		instagramService: instagramService,
 		userService:      userService,
@@ -73,7 +74,7 @@ func (h *InstagramHandler) CheckInstagramToken(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not logged in"})
 	}
 	
-	accessToken, err := h.userService.GetInstagramToken(email)
+	accessToken, _, err := h.userService.GetInstagramCredentials(email)
 	if err != nil || accessToken == "" {
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"instagramLinked": false,

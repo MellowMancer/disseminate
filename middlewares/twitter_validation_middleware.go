@@ -2,12 +2,13 @@ package middlewares
 
 import (
 	"net/http"
-	"backend/services"
+	service_twitter "backend/services/twitter"
+    service_user "backend/services/user"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
 
-func TwitterValidationMiddleware(twitterService services.TwitterService, userService services.UserService) echo.MiddlewareFunc {
+func TwitterValidationMiddleware(twitterService service_twitter.TwitterService, userService service_user.UserService) echo.MiddlewareFunc {
     return func(next echo.HandlerFunc) echo.HandlerFunc {
         return func(c echo.Context) error {
             claims := c.Get("userClaims").(jwt.MapClaims)

@@ -1,7 +1,7 @@
-package services
+package repo_twitter
 
 import (
-	"backend/repositories"
+	repo_twitter "backend/repositories/twitter"
 	"bytes"
 	"fmt"
 	"io"
@@ -25,13 +25,13 @@ type TwitterService interface {
 
 type twitterServiceImpl struct {
 	twitterConfig *oauth1.Config
-	repository   *repositories.SupabaseRepository
+	repo_twitter   repo_twitter.TwitterRepository
 }
 
-func NewTwitterService(repo *repositories.SupabaseRepository, config *oauth1.Config) TwitterService {
+func NewTwitterService(repo repo_twitter.TwitterRepository, config *oauth1.Config) TwitterService {
 	return &twitterServiceImpl{
 		twitterConfig: config,
-		repository: repo,
+		repo_twitter: repo,
 	}
 }
 
@@ -61,7 +61,7 @@ func (s *twitterServiceImpl) CheckTokensValid(accessToken, accessSecret string) 
 	token := oauth1.NewToken(accessToken, accessSecret)
 	httpClient := s.twitterConfig.Client(oauth1.NoContext, token)
 
-	return s.repository.CheckTwitterTokens(httpClient)
+	return s.repo_twitter.CheckTokens(httpClient)
 }
 
 func (s *twitterServiceImpl) uploadMultipleMedia(httpClient *http.Client, files []*multipart.FileHeader) ([]string, error) {
@@ -140,7 +140,7 @@ func (s *twitterServiceImpl) uploadSingleChunked(httpClient *http.Client, mediaD
 	}
 
 	// 1. INIT
-	mediaID, err := s.repository.InitUpload(httpClient, mediaData, mediaType, mediaCategory)
+	mediaID, err := s.repo_twitter.InitUpload(httpClient, mediaData, mediaType, mediaCategory)
 	if err != nil {
 		return "", fmt.Errorf("chunked upload INIT failed: %w", err)
 	}
@@ -152,7 +152,7 @@ func (s *twitterServiceImpl) uploadSingleChunked(httpClient *http.Client, mediaD
 	}
 
 	// 3. FINALIZE
-	err = s.repository.FinalizeUpload(httpClient, mediaID)
+	err = s.repo_twitter.FinalizeUpload(httpClient, mediaID)
 	if err != nil {
 		return "", fmt.Errorf("chunked upload FINALIZE failed: %w", err)
 	}
@@ -182,7 +182,7 @@ func (s *twitterServiceImpl) appendUploads(httpClient *http.Client, mediaID stri
 			break
 		}
 
-		statusCode, err := s.repository.AppendUpload(httpClient, mediaID, chunk[:bytesRead], segmentIndex)
+		statusCode, err := s.repo_twitter.AppendUpload(httpClient, mediaID, chunk[:bytesRead], segmentIndex)
 		if err != nil {
 			return fmt.Errorf("failed to append chunk %d: %w", segmentIndex, err)
 		}
@@ -208,7 +208,7 @@ func (s *twitterServiceImpl) statusHandlingLoop(httpClient *http.Client, mediaCa
 			return fmt.Errorf("timed out while waiting for media processing")
 
 		case <-time.After(checkAfter):
-			statusResp, err := s.repository.StatusUpload(httpClient, mediaID)
+			statusResp, err := s.repo_twitter.StatusUpload(httpClient, mediaID)
 			if err != nil {
 				return fmt.Errorf("error during STATUS check: %w", err)
 			}
@@ -258,5 +258,5 @@ func (s *twitterServiceImpl) PostTweet(accessToken string, accessSecret string, 
 		}
 	}
 
-	return s.repository.PostTweet(httpClient, postURL, payload)
+	return s.repo_twitter.PostTweet(httpClient, postURL, payload)
 }

@@ -1,19 +1,19 @@
-package repositories
+package supabase
 
 import (
 	"net/http"
 )
 
 type SupabaseRepository struct {
-	supabaseKey string
-	supabaseURL string
-	httpClient *http.Client
+	SupabaseKey string
+	SupabaseURL string
+	HttpClient *http.Client
 }
 
 func NewSupabaseRepository(supabaseUrl, supabaseKey string) *SupabaseRepository {
 	return &SupabaseRepository{
-		supabaseKey: supabaseKey,
-		supabaseURL: supabaseUrl,
-		httpClient: &http.Client{},
+		SupabaseKey: supabaseKey,
+		SupabaseURL: supabaseUrl,
+		HttpClient: &http.Client{},
 	}
 }

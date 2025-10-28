@@ -1,8 +1,10 @@
-package services
+package user
 
 import (
 	"backend/models"
-	"backend/repositories"
+	repo_user "backend/repositories/user"
+	repo_instagram "backend/repositories/instagram"
+	repo_twitter "backend/repositories/twitter"
 	"fmt"
 	"time"
 
@@ -19,23 +21,27 @@ type UserService interface {
 	SaveTwitterToken(email string, accessToken string, accessSecret string) error
 	GetTwitterToken(email string) (string, string, error)
 	SaveInstagramToken(email string, accessToken string, expiresIn int) error
-	GetInstagramToken(email string) (string, error)
+	GetInstagramCredentials(email string) (string, string, error)
 }
 
 type userServiceImpl struct {
-	repository *repositories.SupabaseRepository
-	jwtSecret  []byte
+	repo_user      repo_user.UserRepository
+	repo_instagram repo_instagram.InstagramRepository
+	repo_twitter   repo_twitter.TwitterRepository
+	jwtSecret      []byte
 }
 
-func NewUserService(repo *repositories.SupabaseRepository, jwtSecret []byte) UserService {
+func NewUserService(repoUser repo_user.UserRepository, repoInstagram repo_instagram.InstagramRepository, repoTwitter repo_twitter.TwitterRepository, jwtSecret []byte) UserService {
 	return &userServiceImpl{
-		repository: repo,
-		jwtSecret:  []byte(jwtSecret),
+		repo_user: repoUser,
+		repo_instagram: repoInstagram,
+		repo_twitter: repoTwitter,
+		jwtSecret: []byte(jwtSecret),
 	}
 }
 
 func (s *userServiceImpl) CreateUser(user *models.User) error {
-	exists, err := s.repository.ExistsByEmail(user.Email)
+	exists, err := s.repo_user.ExistsByEmail(user.Email)
 	if err != nil {
 		return err
 	}
@@ -43,11 +49,11 @@ func (s *userServiceImpl) CreateUser(user *models.User) error {
 		return fmt.Errorf("user already exists")
 	}
 
-	return s.repository.Create(user)
+	return s.repo_user.Create(user)
 }
 
 func (s *userServiceImpl) LoginUser(user *models.User) (string, error) {
-	data, err := s.repository.FindByEmail(user.Email)
+	data, err := s.repo_user.FindByEmail(user.Email)
 	if err != nil {
 		return "", err
 	}
@@ -85,7 +91,7 @@ func (s *userServiceImpl) IsLoggedIn(c echo.Context) (bool, string, error) {
 		return false, "", fmt.Errorf("Email (sub) claim not found in token")
 	}
 
-	exists, err := s.repository.ExistsByEmail(email)
+	exists, err := s.repo_user.ExistsByEmail(email)
 	if err != nil || !exists {
 		return false, "", err
 	}
@@ -93,44 +99,43 @@ func (s *userServiceImpl) IsLoggedIn(c echo.Context) (bool, string, error) {
 }
 
 func (s *userServiceImpl) SaveTwitterToken(email, accessToken, accessSecret string) error {
-	userID, err := s.repository.UserIDByEmail(email)
+	userID, err := s.repo_user.UserIDByEmail(email)
 	if err != nil {
 		return err
 	}
 
-	return s.repository.SaveTwitterToken(userID, accessToken, accessSecret)
+	return s.repo_twitter.SaveToken(userID, accessToken, accessSecret)
 }
 
 func (s *userServiceImpl) GetTwitterToken(email string) (string, string, error) {
-	userID, err := s.repository.UserIDByEmail(email)
+	userID, err := s.repo_user.UserIDByEmail(email)
 	if err != nil {
 		return "", "", err
 	}
-	return s.repository.GetTwitterToken(userID)
+	return s.repo_twitter.GetToken(userID)
 }
 
 func (s *userServiceImpl) SaveInstagramToken(email string, accessToken string, expiresIn int) error {
-	userID, err := s.repository.UserIDByEmail(email)
+	userID, err := s.repo_user.UserIDByEmail(email)
 	if err != nil {
 		return err
 	}
 
 	expirationTime := time.Now().Add(time.Duration(expiresIn) * time.Second).UTC()
 
-	instagramID, err := s.repository.GetInstagramID(accessToken)
+	instagramID, err := s.repo_instagram.GetInstagramID(accessToken)
 	if err != nil {
 		return err
 	}
 
-	return s.repository.SaveInstagramToken(userID, instagramID, accessToken, expirationTime)
+	return s.repo_instagram.SaveToken(userID, instagramID, accessToken, expirationTime)
 }
 
-func (s *userServiceImpl) GetInstagramToken(email string) (string, error) {
-
-	userID, err := s.repository.UserIDByEmail(email)
+func (s *userServiceImpl) GetInstagramCredentials(email string) (string, string, error) {
+	userID, err := s.repo_user.UserIDByEmail(email)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return s.repository.GetInstagramToken(userID)
+	return s.repo_instagram.GetCredentials(userID)
 }
