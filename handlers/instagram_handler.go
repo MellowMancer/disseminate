@@ -75,6 +75,7 @@ func (h *InstagramHandler) CheckInstagramToken(c echo.Context) error {
 	}
 	
 	accessToken, _, err := h.userService.GetInstagramCredentials(email)
+	log.Println("[CHECK_INSTAGRAM_TOKEN] --- Retrieved access token: ", accessToken, " ---")
 	if err != nil || accessToken == "" {
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"instagramLinked": false,
@@ -101,12 +102,16 @@ func (h *InstagramHandler) Callback(c echo.Context) error {
 		return c.Redirect(http.StatusSeeOther, redirectURL)
 	}
 
+	log.Println("[CALLBACK_TRACE] --- Session retrieved successfully ---")
+
 	// 2. Check for user email in session
 	email, ok := sess.Values["userEmail"].(string)
 	if !ok {
 		redirectURL := fmt.Sprintf("%s?status=error&provider=twitter&code=no_user_in_session", profilePath)
 		return c.Redirect(http.StatusSeeOther, redirectURL)
 	}
+
+	log.Println("[CALLBACK_TRACE] --- User email found in session: ", email, " ---")
 
 	// 3. Handle Instagram callback
 	r := c.Request()
@@ -119,8 +124,12 @@ func (h *InstagramHandler) Callback(c echo.Context) error {
 		return fmt.Errorf("state mismatch")
 	}
 
+	log.Println("[CALLBACK_TRACE] --- State validated successfully ---")
+
 	sess.Options.MaxAge = -1 // Clean up session
 	sess.Save(c.Request(), c.Response())
+
+	log.Println("[CALLBACK_TRACE] --- Session cleaned up ---")
 
 	token, expiresIn, err := h.instagramService.GetAccessToken(code)
 	if err != nil {
@@ -128,10 +137,14 @@ func (h *InstagramHandler) Callback(c echo.Context) error {
 	}
 	log.Println(email)
 
+	log.Println("[CALLBACK_TRACE] --- Access token obtained successfully ---")
+
 	err = h.userService.SaveInstagramToken(email, token, expiresIn)
 	if err != nil {
 		return fmt.Errorf("failed to link instagram to your account")
 	}
+
+	log.Println("[CALLBACK_TRACE] --- Instagram linked to user account successfully ---")
 
 	successRedirectURL := fmt.Sprintf("%s?status=success&provider=instagram", profilePath)
 	return c.Redirect(http.StatusSeeOther, successRedirectURL)
