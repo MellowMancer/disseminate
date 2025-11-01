@@ -5,21 +5,21 @@ import (
 	"context"
 	"fmt"
 	"golang.org/x/oauth2"
-	// "mime/multipart"
+	"mime/multipart"
 	"net/http"
-	// "strings"
+	"strings"
 )
 
 type InstagramService interface {
 	HandleLogin(w http.ResponseWriter, r *http.Request, state string)
 	GetAccessToken(code string) (string, int, error)
 	CheckTokensValid(accessToken string) error
-	// createContainer(accessToken string, instagramID string, caption string, file *multipart.FileHeader, isCarouselItem bool) (string, error)
-	// createCarouselContainer(accessToken string, instagramID string, caption string, files []*multipart.FileHeader) (string, error)
-	// publishMedia()
-	// containerStatus()
-	// checkPublishLimit(instagramID string, accessToken string) (bool, error)
-	// PostToInstagram(accessToken string, instagramID string, caption string, files []*multipart.FileHeader) (string, error)
+	createContainer(accessToken string, instagramID string, caption string, file *multipart.FileHeader, isCarouselItem bool) (string, error)
+	createCarouselContainer(accessToken string, instagramID string, caption string, files []*multipart.FileHeader) (string, error)
+	publishMedia()
+	containerStatus(accessToken string, containerID string) (string, error)
+	checkPublishLimit(instagramID string, accessToken string) (bool, error)
+	PostToInstagram(accessToken string, instagramID string, caption string, files []*multipart.FileHeader) (string, error)
 }
 
 type instagramServiceImpl struct {
@@ -55,107 +55,115 @@ func (i *instagramServiceImpl) CheckTokensValid(accessToken string) error {
 	return i.repo_instagram.CheckTokens(accessToken)
 }
 
-// func (i *instagramServiceImpl) checkPublishLimit(instagramID string, accessToken string) (bool, error) {
-// 	return i.repo_instagram.CheckPublishLimit(instagramID, accessToken)
-// }
+func (i *instagramServiceImpl) checkPublishLimit(accessToken string, instagramID string, ) (bool, error) {
+	return i.repo_instagram.CheckPublishLimit( accessToken, instagramID)
+}
 
-// func (i *instagramServiceImpl) uploadMedia(accessToken string, file multipart.File) (string, error) {
-// 	return i.repo_instagram.UploadMedia(accessToken, file)
-// }
+func (i *instagramServiceImpl) uploadMedia(file multipart.File) (string, error) {
+	return i.repo_instagram.UploadMedia(file)
+}
 
-// func (i *instagramServiceImpl) createContainer(accessToken string, instagramID string, caption string, file *multipart.FileHeader, isCarouselItem bool) (string, error) {
-// 	f, err := file.Open()
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to open uploaded file: %w", err)
-// 	}
-// 	defer f.Close()
-// 	buffer := make([]byte, 512)
-// 	bytesRead, err := f.Read(buffer)
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to read media file: %w", err)
-// 	}
-// 	mediaType := http.DetectContentType(buffer[:bytesRead])
-// 	switch {
-// 	case strings.HasPrefix(mediaType, "image/"):
-// 		mediaType = "IMAGE"
-// 	case strings.HasPrefix(mediaType, "video/"):
-// 		mediaType = "VIDEO"
-// 	default:
-// 		return "", fmt.Errorf("unsupported media type: %s", mediaType)
-// 	}
-// 	containerID, err := i.repo_instagram.CreateContainer(accessToken, instagramID, caption, mediaType, isCarouselItem)
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to create media container: %w", err)
-// 	}
-// 	_, err = i.uploadMedia(accessToken, f)
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to upload media: %w", err)
-// 	}
+func (i *instagramServiceImpl) createContainer(accessToken string, instagramID string, caption string, file *multipart.FileHeader, isCarouselItem bool) (string, error) {
+	f, err := file.Open()
+	if err != nil {
+		return "", fmt.Errorf("failed to open uploaded file: %w", err)
+	}
+	defer f.Close()
+	buffer := make([]byte, 512)
+	bytesRead, err := f.Read(buffer)
+	if err != nil {
+		return "", fmt.Errorf("failed to read media file: %w", err)
+	}
+	mediaType := http.DetectContentType(buffer[:bytesRead])
+	switch {
+	case strings.HasPrefix(mediaType, "image/"):
+		mediaType = "IMAGE"
+	case strings.HasPrefix(mediaType, "video/"):
+		mediaType = "VIDEO"
+	default:
+		return "", fmt.Errorf("unsupported media type: %s", mediaType)
+	}
+	
+	_, err = i.uploadMedia(f)
+	if err != nil {
+		return "", fmt.Errorf("failed to upload media: %w", err)
+	}
 
-// 	return containerID, nil
-// }
+	containerID, err := i.repo_instagram.CreateContainer(accessToken, instagramID, caption, mediaType, isCarouselItem)
+	if err != nil {
+		return "", fmt.Errorf("failed to create media container: %w", err)
+	}
 
-// func (i *instagramServiceImpl) createCarouselContainer(accessToken string, instagramID string, caption string, files []*multipart.FileHeader) (string, error) {
-// 	containerIDs := []string{}
-// 	for _, file := range files {
-// 		containerID, err := i.createContainer(accessToken, instagramID, caption, file, true)
-// 		if err != nil {
-// 			return "", err
-// 		}
-// 		containerIDs = append(containerIDs, containerID)
-// 	}
+	return containerID, nil
+}
 
-// 	// Create a carousel container
-// 	containerID, err := i.repo_instagram.CreateCarouselContainer(accessToken, instagramID, caption, containerIDs)
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to create carousel container: %w", err)
-// 	}
-// 	return containerID, nil
-// }
+func (i *instagramServiceImpl) createCarouselContainer(accessToken string, instagramID string, caption string, files []*multipart.FileHeader) (string, error) {
+	containerIDs := []string{}
+	for _, file := range files {
+		containerID, err := i.createContainer(accessToken, instagramID, caption, file, true)
+		if err != nil {
+			return "", err
+		}
+		containerIDs = append(containerIDs, containerID)
+	}
 
-// func (i *instagramServiceImpl) containerStatus(containerID string) (string, error) {
-// 	return i.repo_instagram.ContainerStatus(accessToken, containerID)
-// }
+	// Create a carousel container
+	containerID, err := i.repo_instagram.CreateCarouselContainer(accessToken, instagramID, caption, containerIDs)
+	if err != nil {
+		return "", fmt.Errorf("failed to create carousel container: %w", err)
+	}
+	return containerID, nil
+}
 
-// func (i *instagramServiceImpl) publishMedia() {
+func (i *instagramServiceImpl) containerStatus(accessToken string, containerID string) (string, error) {
+	return i.repo_instagram.ContainerStatus(accessToken, containerID)
+}
 
-// }
+func (i *instagramServiceImpl) publishMedia() {
 
-// func (i *instagramServiceImpl) PostToInstagram(accessToken string, instagramID string, caption string, files []*multipart.FileHeader) (string, error) {
-// 	var containerID string
-// 	var err error
+}
 
-// 	// 0. Publish Limit Check
-// 	canPublish, err := i.checkPublishLimit(instagramID, accessToken)
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	if !canPublish {
-// 		return "", fmt.Errorf("Publish limit reached for today")
-// 	}
+func (i *instagramServiceImpl) PostToInstagram(accessToken string, instagramID string, caption string, files []*multipart.FileHeader) (string, error) {
+	var containerID string
+	var err error
 
-// 	fmt.Printf("--------CAN PUBLISH-----------")
+	fmt.Printf("--------POST TO INSTAGRAM STARTING-----------")
 
-// 	// 1. Upload media / Create containers
-// 	if len(files) == 0 {
-// 		return "", fmt.Errorf("No files attached")
-// 	}
-// 	if len(files) == 1 {
-// 		containerID, err = i.createContainer(accessToken, instagramID, caption, files[0], false)
-// 		if err != nil {
-// 			return "", err
-// 		}
-// 	} else {
-// 		containerID, err = i.createCarouselContainer(accessToken, instagramID, caption, files)
-// 		if err != nil {
-// 			return "", err
-// 		}
-// 	}
+	// 0. Publish Limit Check
+	canPublish, err := i.checkPublishLimit(accessToken, instagramID)
+	if err != nil {
+		return "", err
+	}
+	if !canPublish {
+		return "", fmt.Errorf("Publish limit reached for today")
+	}
 
-// 	fmt.Printf("--------CONTAINER CREATED: %s-----------", containerID)
+	fmt.Printf("--------CAN PUBLISH-----------")
 
-// 	// 2. Check container status
-// 	i.containerStatus(containerID)
+	// 1. Upload media / Create containers
+	if len(files) == 0 {
+		return "", fmt.Errorf("No files attached")
+	}
+	if len(files) == 1 {
+		containerID, err = i.createContainer(accessToken, instagramID, caption, files[0], false)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		containerID, err = i.createCarouselContainer(accessToken, instagramID, caption, files)
+		if err != nil {
+			return "", err
+		}
+	}
 
-// 	// 3. Publish media
-// }
+	fmt.Printf("--------CONTAINER CREATED: %s-----------", containerID)
+
+	// 2. Check container status
+	i.containerStatus(accessToken, containerID)
+
+	fmt.Printf("--------CONTAINER STATUS CHECKED-----------")
+
+	// 3. Publish media
+
+	return "", nil
+}

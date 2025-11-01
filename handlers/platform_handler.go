@@ -55,8 +55,8 @@ func (h *PlatformHandler) PostToPlatform(c echo.Context) error {
 	case "twitter":
 		return h.postToTwitter(c, email, platformDataJSON, files)
 
-	// case "instagram":
-		// return h.postToInstagram(c, email, platformDataJSON, files)
+	case "instagram":
+		return h.postToInstagram(c, email, platformDataJSON, files)
 		// OTHER PLATFORMS COMING SOON HEHEHEHEE
 
 	default:
@@ -86,26 +86,26 @@ func (h *PlatformHandler) postToTwitter(c echo.Context, email string, platformDa
 	return c.JSON(http.StatusOK, map[string]string{"message": "Tweet scheduled successfully!"})
 }
 
-// func (h *PlatformHandler) postToInstagram(c echo.Context, email string, platformData string, files []*multipart.FileHeader) error {
-// 	accessToken, instagramID, err := h.userService.GetInstagramCredentials(email)
-// 	if err != nil || accessToken == "" || instagramID == "" {
-// 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Instagram account not linked or tokens are missing"})
-// 	}
-// 	var instagramData struct {
-// 		Caption string `json:"caption"`
-// 		// THINK OF MORE PARAMS LATER BECAUSE I AM SLEEP DEPRIVED RIGHT NOW
-// 	}
-// 	if err := json.Unmarshal([]byte(platformData), &instagramData); err != nil {
-// 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid format for platformData"})
-// 	}
-// 	if instagramData.Caption == "" && len(files) == 0 {
-// 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "An Instagram post must have either a caption or media."})
-// 	}
+func (h *PlatformHandler) postToInstagram(c echo.Context, email string, platformData string, files []*multipart.FileHeader) error {
+	accessToken, instagramID, err := h.userService.GetInstagramCredentials(email)
+	if err != nil || accessToken == "" || instagramID == "" {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Instagram account not linked or tokens are missing"})
+	}
+	var instagramData struct {
+		Caption string `json:"caption"`
+		// THINK OF MORE PARAMS LATER BECAUSE I AM SLEEP DEPRIVED RIGHT NOW
+	}
+	if err := json.Unmarshal([]byte(platformData), &instagramData); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid format for platformData"})
+	}
+	if instagramData.Caption == "" && len(files) == 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "An Instagram post must have either a caption or media."})
+	}
 
-// 	mediaURL, err := h.instagramService.PostToInstagram(accessToken, instagramID, instagramData.Caption, files)
-// 	if err != nil {
-// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to post to Instagram: " + err.Error()})
-// 	}
-// 	return c.JSON(http.StatusOK, map[string]string{"message": "Instagram post scheduled successfully!", "mediaURL": mediaURL})
+	mediaURL, err := h.instagramService.PostToInstagram(accessToken, instagramID, instagramData.Caption, files)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to post to Instagram: " + err.Error()})
+	}
+	return c.JSON(http.StatusOK, map[string]string{"message": "Instagram post scheduled successfully!", "mediaURL": mediaURL})
 
-// }
+}
