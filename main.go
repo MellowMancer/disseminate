@@ -7,8 +7,9 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
+	"github.com/joho/godotenv"
+	"os"
 
 	"backend/handlers"
 	"backend/middlewares"
@@ -23,33 +24,50 @@ import (
 
 	"github.com/dghubble/oauth1"
 	"github.com/gorilla/sessions"
-	"github.com/joho/godotenv"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"golang.org/x/oauth2"
 )
 
+type EnvConfig struct {
+	TwitterConsumerKey	string
+	TwitterConsumerSecret	string
+	TwitterCallbackURL		string
+
+	InstagramClientID		string
+	InstagramClientSecret	string
+	InstagramRedirectURL		string
+
+	SupabaseURL			string
+	SupabaseKey			string
+
+	CloudflareAccountID		string
+	CloudflareS3APIURL		string
+	CloudflareToken			string
+	CloudflareS3AccessKeyID		string
+	CloudflareS3SecretAccessKey	string
+
+	JWTSecret			string
+	SessionSecret			string
+	AppEnv				string
+}
+
 //go:embed all:frontend/dist
 var embeddedFrontend embed.FS
 
-func main() {
+const TWITTERCALLBACKPATH = "/twitter/link/callback"
+const INSTAGRAMCALLBACKPATH = "/instagram/link/callback"
+
+func loadEnv() EnvConfig{
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using environment variables")
 	}
-
-	sessionSecret := os.Getenv("SESSION_SECRET")
-	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
-	appEnv := os.Getenv("APP_ENV")
 
 	twitterConsumerKey := os.Getenv("TWITTER_CONSUMER_KEY")
 	twitterConsumerSecret := os.Getenv("TWITTER_CONSUMER_SECRET")
 	twitterCallbackURL := os.Getenv("TWITTER_CALLBACK_URL")
 
-	// metaAppID := os.Getenv("META_APP_ID")
-	// metaAppSecret := os.Getenv("META_APP_SECRET")
-	// metaRedirectURL := os.Getenv("META_REDIRECT_URL")
-	// metaConfigurationID := os.Getenv("META_CONFIGURATION_ID")
 	instagramClientID := os.Getenv("INSTAGRAM_APP_ID")
 	instagramClientSecret := os.Getenv("INSTAGRAM_APP_SECRET")
 	instagramRedirectURL := os.Getenv("INSTAGRAM_REDIRECT_URL")
@@ -57,65 +75,62 @@ func main() {
 	supabaseURL := os.Getenv("SUPABASE_URL")
 	supabaseKey := os.Getenv("SUPABASE_KEY")
 
-	twitterEndpoint := oauth1.Endpoint{
-		RequestTokenURL: "https://api.twitter.com/oauth/request_token",
-		AuthorizeURL:    "https://api.twitter.com/oauth/authorize",
-		AccessTokenURL:  "https://api.twitter.com/oauth/access_token",
+	cloudflareAccountID := os.Getenv("CLOUDFLARE_ACCOUNT_ID")
+	cloudflareS3APIURL := os.Getenv("CLOUDFLARE_S3_API_URL")
+	cloudflareToken := os.Getenv("CLOUDFLARE_TOKEN")
+	cloudflareS3AccessKeyID := os.Getenv("CLOUDFLARE_S3_ACCESS_KEY_ID")
+	cloudflareS3SecretAccessKey := os.Getenv("CLOUDFLARE_S3_SECRET_ACCESS_KEY")
+
+	sessionSecret := os.Getenv("SESSION_SECRET")
+	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
+	appEnv := os.Getenv("APP_ENV")
+
+
+	envConfig := EnvConfig{
+		TwitterConsumerKey:        twitterConsumerKey,
+		TwitterConsumerSecret:     twitterConsumerSecret,
+		TwitterCallbackURL:        twitterCallbackURL,
+
+		InstagramClientID:        instagramClientID,
+		InstagramClientSecret:     instagramClientSecret,
+		InstagramRedirectURL:      instagramRedirectURL,
+
+		SupabaseURL:              supabaseURL,
+		SupabaseKey:              supabaseKey,
+
+		CloudflareAccountID:      cloudflareAccountID,
+		CloudflareS3APIURL:       cloudflareS3APIURL,
+		CloudflareToken:          cloudflareToken,
+		CloudflareS3AccessKeyID:  cloudflareS3AccessKeyID,
+		CloudflareS3SecretAccessKey: cloudflareS3SecretAccessKey,
+		
+		JWTSecret:                string(jwtSecret),
+		SessionSecret:            sessionSecret,
+		AppEnv:                   appEnv,
 	}
 
-	twitterConfig := &oauth1.Config{
-		ConsumerKey:    twitterConsumerKey,
-		ConsumerSecret: twitterConsumerSecret,
-		CallbackURL:    twitterCallbackURL,
-		Endpoint:       twitterEndpoint,
-	}
+	return envConfig
+}
 
-	instagramEndpoint := oauth2.Endpoint{
-		AuthURL:  fmt.Sprintf("https://www.instagram.com/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=instagram_business_basic,instagram_business_content_publish&force_reauth=true", instagramClientID, instagramRedirectURL),
-		TokenURL: "https://api.instagram.com/oauth/access_token",
-	}
-
-	instagramConfig := &oauth2.Config{
-		ClientID:     instagramClientID,
-		ClientSecret: instagramClientSecret,
-		RedirectURL:  instagramRedirectURL,
-		Scopes: []string{"instagram_business_basic,instagram_content_publish"},
-		Endpoint: instagramEndpoint,
-	}
-
-	const TWITTERCALLBACKPATH = "/twitter/link/callback"
-	const INSTAGRAMCALLBACKPATH = "/instagram/link/callback"
-
-	// --- Services and Handlers ---
-	supabaseRepository := repo_supabase.NewSupabaseRepository(supabaseURL, supabaseKey)
-	userRepository := repo_user.NewUserRepository(supabaseRepository)
-	twitterRepository := repo_twitter.NewTwitterRepository(supabaseRepository)
-	instagramRepository := repo_instagram.NewInstagramRepository(supabaseRepository) 
-
-	userService := service_user.NewUserService(userRepository, instagramRepository, twitterRepository, jwtSecret)
-	userHandler := handlers.NewHandler(userService)
-
-	twitterService := service_twitter.NewTwitterService(twitterRepository, twitterConfig)
-	twitterHandler := handlers.NewTwitterHandler(twitterService, userService)
-	
-	instagramService := service_instagram.NewInstagramService(instagramConfig, instagramRepository)
-	instagramHandler := handlers.NewInstagramHandler(instagramService, userService)
-
-	platformHandler := handlers.NewPlatformHandler(twitterService, instagramService, userService)
+func setupServer(envConfig EnvConfig,
+	userHandler *handlers.Handler,
+	twitterHandler *handlers.TwitterHandler,
+	instagramHandler *handlers.InstagramHandler,
+	platformHandler *handlers.PlatformHandler) *echo.Echo {
 
 	e := echo.New()
 
 	// --- Global Middlewares ---
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Use(session.Middleware(sessions.NewCookieStore([]byte(sessionSecret))))
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte(envConfig.SessionSecret))))
 
-	// --- API Routes (These are handled directly by Go in both dev and prod) ---
+	// --- API Routes (These are handled by Go in both dev and prod) ---
 	authGroup := e.Group("/auth")
 	routes.RegisterAuthRoutes(authGroup, userHandler)
 
 	apiGroup := e.Group("/api")
-	apiGroup.Use(middlewares.JWTMiddleware(jwtSecret, []string{}))
+	apiGroup.Use(middlewares.JWTMiddleware([]byte(envConfig.JWTSecret), []string{}))
 	routes.RegisterPlatformRoute(apiGroup, platformHandler)
 	routes.RegisterTwitterRoutes(apiGroup, twitterHandler)
 	routes.RegisterInstagramRoutes(apiGroup, instagramHandler)
@@ -123,8 +138,7 @@ func main() {
 	e.GET(TWITTERCALLBACKPATH, twitterHandler.Callback)
 	e.GET(INSTAGRAMCALLBACKPATH, instagramHandler.Callback)
 
-	if appEnv == "production" {
-		// --- PRODUCTION MODE ---
+	if envConfig.AppEnv == "production" {
 		// Serve the frontend from the embedded filesystem.
 		log.Println("Running in PRODUCTION mode")
 		staticFilesFS, err := fs.Sub(embeddedFrontend, "frontend/dist")
@@ -141,7 +155,6 @@ func main() {
 			HTML5:      true, // Crucial for SPAs
 		}))
 	} else {
-		// --- DEVELOPMENT MODE ---
 		// Reverse proxy all non-API requests to the Vite dev server.
 		log.Println("Running in DEVELOPMENT mode")
 		viteServerURL, err := url.Parse("http://localhost:5173")
@@ -162,6 +175,63 @@ func main() {
 		}))
 	}
 
+	return e
+}
+
+func main() {
+	envConfig := loadEnv()
+
+	twitterEndpoint := oauth1.Endpoint{
+		RequestTokenURL: "https://api.twitter.com/oauth/request_token",
+		AuthorizeURL:    "https://api.twitter.com/oauth/authorize",
+		AccessTokenURL:  "https://api.twitter.com/oauth/access_token",
+	}
+
+	twitterConfig := &oauth1.Config{
+		ConsumerKey:    envConfig.TwitterConsumerKey,
+		ConsumerSecret: envConfig.TwitterConsumerSecret,
+		CallbackURL:    envConfig.TwitterCallbackURL,
+		Endpoint:       twitterEndpoint,
+	}
+
+	instagramEndpoint := oauth2.Endpoint{
+		AuthURL:  fmt.Sprintf("https://www.instagram.com/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=instagram_business_basic,instagram_business_content_publish&force_reauth=true", envConfig.InstagramClientID, envConfig.InstagramRedirectURL),
+		TokenURL: "https://api.instagram.com/oauth/access_token",
+	}
+
+	instagramConfig := &oauth2.Config{
+		ClientID:     envConfig.InstagramClientID,
+		ClientSecret: envConfig.InstagramClientSecret,
+		RedirectURL:  envConfig.InstagramRedirectURL,
+		Scopes:       []string{"instagram_business_basic,instagram_content_publish"},
+		Endpoint:     instagramEndpoint,
+	}
+
+	// --- Services and Handlers ---
+	supabaseRepository := repo_supabase.NewSupabaseRepository(envConfig.SupabaseURL, envConfig.SupabaseKey)
+	userRepository := repo_user.NewUserRepository(supabaseRepository)
+	twitterRepository := repo_twitter.NewTwitterRepository(supabaseRepository)
+	instagramRepository := repo_instagram.NewInstagramRepository(supabaseRepository)
+
+	userService := service_user.NewUserService(userRepository, instagramRepository, twitterRepository, []byte(envConfig.JWTSecret))
+	userHandler := handlers.NewHandler(userService)
+
+	twitterService := service_twitter.NewTwitterService(twitterRepository, twitterConfig)
+	twitterHandler := handlers.NewTwitterHandler(twitterService, userService)
+
+	instagramService := service_instagram.NewInstagramService(instagramConfig, instagramRepository)
+	instagramHandler := handlers.NewInstagramHandler(instagramService, userService)
+
+	platformHandler := handlers.NewPlatformHandler(twitterService, instagramService, userService)
+
+	e := setupServer(envConfig,
+		userHandler,
+		twitterHandler,
+		instagramHandler,
+		platformHandler,
+	)
+
 	log.Println("Starting server on :8080")
 	e.Logger.Fatal(e.Start(":8080"))
 }
+

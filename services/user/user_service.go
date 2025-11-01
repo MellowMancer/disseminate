@@ -122,13 +122,15 @@ func (s *userServiceImpl) SaveInstagramToken(email string, accessToken string, e
 	}
 
 	expirationTime := time.Now().Add(time.Duration(expiresIn) * time.Second).UTC()
+	//convert to string
+	expirationTimeStr := expirationTime.Format(time.RFC3339)
 
 	instagramID, err := s.repo_instagram.GetInstagramID(accessToken)
 	if err != nil {
 		return err
 	}
 
-	return s.repo_instagram.SaveToken(userID, instagramID, accessToken, expirationTime)
+	return s.repo_instagram.SaveToken(accessToken, userID, instagramID, expirationTimeStr)
 }
 
 func (s *userServiceImpl) GetInstagramCredentials(email string) (string, string, error) {
