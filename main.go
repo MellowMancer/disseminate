@@ -2,17 +2,20 @@ package main
 
 import (
 	"embed"
+	"context"
 	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
 	"net/url"
-	"strings"
-	"github.com/joho/godotenv"
 	"os"
+	"strings"
+
+	"github.com/joho/godotenv"
 
 	"backend/handlers"
 	"backend/middlewares"
+	repo_cloudflare "backend/repositories/cloudflare"
 	repo_instagram "backend/repositories/instagram"
 	repo_supabase "backend/repositories/supabase"
 	repo_twitter "backend/repositories/twitter"
@@ -209,9 +212,20 @@ func main() {
 
 	// --- Services and Handlers ---
 	supabaseRepository := repo_supabase.NewSupabaseRepository(envConfig.SupabaseURL, envConfig.SupabaseKey)
+	cloudflareRepository, err := repo_cloudflare.NewCloudflareRepository(
+		context.Background(),
+		envConfig.CloudflareAccountID,
+		envConfig.CloudflareS3APIURL,
+		envConfig.CloudflareToken,
+		envConfig.CloudflareS3AccessKeyID,
+		envConfig.CloudflareS3SecretAccessKey,
+	)
+	if err != nil {
+		log.Fatal("Failed to initialize Cloudflare repository:", err)
+	}
 	userRepository := repo_user.NewUserRepository(supabaseRepository)
 	twitterRepository := repo_twitter.NewTwitterRepository(supabaseRepository)
-	instagramRepository := repo_instagram.NewInstagramRepository(supabaseRepository)
+	instagramRepository := repo_instagram.NewInstagramRepository(supabaseRepository, cloudflareRepository)
 
 	userService := service_user.NewUserService(userRepository, instagramRepository, twitterRepository, []byte(envConfig.JWTSecret))
 	userHandler := handlers.NewHandler(userService)
