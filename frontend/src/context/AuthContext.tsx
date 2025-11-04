@@ -3,23 +3,31 @@ import { createContext, useContext, useState, type ReactNode, useEffect, useMemo
 interface AuthContextType {
   authenticated: boolean;
   setAuthenticated: (value: boolean) => void;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authenticated, setAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true); // New loading state
 
   useEffect(() => {
     fetch("/auth/status", { credentials: "include" })
-      .then(res => res.json())
-      .then(data => setAuthenticated(data.authenticated))
-      .catch(() => setAuthenticated(false));
+      .then((res) => res.json())
+      .then((data) => {
+          setAuthenticated(data.authenticated);
+          setLoading(false);
+      })
+      .catch(() => {
+        setAuthenticated(false);
+        setLoading(false); // Done loading even on error
+      });
   }, []);
 
   const value = useMemo(
-    () => ({ authenticated, setAuthenticated }),
-    [authenticated, setAuthenticated]
+    () => ({ authenticated, setAuthenticated, loading }),
+    [authenticated, loading]
   );
 
   return (
@@ -28,6 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
+
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

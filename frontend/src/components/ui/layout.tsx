@@ -8,7 +8,7 @@ const Layout: React.FC = () => {
 
   return (
     <div className="h-screen w-screen overflow-auto bg-background pt-28 py-16 px-8 md:py-8 md:px-24 mx-auto ">
-      <Navbar />
+      <Navbar/>
       <Outlet context={{ authenticated }} />
 
     </div>

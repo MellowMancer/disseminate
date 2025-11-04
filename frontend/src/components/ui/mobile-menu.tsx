@@ -63,14 +63,6 @@ export function MobileMenu() {
                     >
                         Home
                     </Button>
-                    
-                    <Button
-                        variant="ghost"
-                        className="w-full justify-start text-base h-12 text-foreground"
-                        onClick={() => {}}
-                    >
-                        About
-                    </Button>
 
                     {authenticated && (
                         <Button

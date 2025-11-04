@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"log"
+	"fmt"
 	"net/http"
 	"backend/models"
 	service_user "backend/services/user"
@@ -67,7 +68,7 @@ func (h *Handler) Login(c echo.Context) error {
 	cookie.Path = "/"
 	cookie.HttpOnly = true
 	cookie.Secure = false // ONLY FOR NOW, REMEMBER TO TURN THIS ON FOR DEPLOYMENT
-	cookie.SameSite = http.SameSiteLaxMode
+	cookie.SameSite = http.SameSiteStrictMode
 	cookie.MaxAge = 86400 * 3
 
 	c.SetCookie(cookie)
@@ -97,25 +98,55 @@ func (h *Handler) Logout(c echo.Context) error {
 }
 
 func (h *Handler) AuthStatus(c echo.Context) error {
-	cookie, err := c.Cookie("jwt_token")
-	if err != nil {
-		return c.JSON(http.StatusOK, map[string]any{"authenticated": false})
-	}
-	token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, echo.ErrUnauthorized
-		}
-		jwtSecret := h.UserService.GetJWTSecret()
-		return jwtSecret, nil
-	})
-	if err != nil || !token.Valid {
-		return c.JSON(http.StatusOK, map[string]any{"authenticated": false})
-	}
+	log.Println("[AuthStatus] --- AuthStatus handler initiated ---")
+	fmt.Println("[AuthStatus] --- AuthStatus handler initiated ---")
+    cookie, err := c.Cookie("jwt_token")
+    if err != nil {
+        // Log if cookie is missing
+        log.Println("[AuthStatus] No jwt_token cookie in request:", err)
+        return c.JSON(http.StatusOK, map[string]any{"authenticated": false})
+    }
 
-	claims := token.Claims.(jwt.MapClaims)
-	email := claims["sub"].(string)
-	return c.JSON(http.StatusOK, map[string]any{
-		"authenticated": true,
-		"email":         email,
-	})
+    log.Println("[AuthStatus] jwt_token cookie received:", cookie.Value)
+
+    token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
+        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+            log.Println("[AuthStatus] Unexpected signing method:", token.Header["alg"])
+            return nil, echo.ErrUnauthorized
+        }
+        jwtSecret := h.UserService.GetJWTSecret()
+        return jwtSecret, nil
+    })
+    if err != nil {
+        // Log detailed JWT parse error
+        log.Println("[AuthStatus] JWT parsing error:", err)
+    }
+    if token == nil || !token.Valid {
+        // Log if JWT is not valid
+        log.Println("[AuthStatus] Invalid or nil token. Valid:", token != nil && token.Valid)
+        return c.JSON(http.StatusOK, map[string]any{"authenticated": false})
+    }
+
+    claims, ok := token.Claims.(jwt.MapClaims)
+    if !ok {
+        // Log if claims extraction fails
+        log.Println("[AuthStatus] Failed to extract jwt.MapClaims")
+        return c.JSON(http.StatusOK, map[string]any{"authenticated": false})
+    }
+
+    email, ok := claims["sub"].(string)
+    if !ok {
+        // Log if 'sub' claim is missing or not a string
+        log.Println("[AuthStatus] 'sub' claim missing or not string in JWT claims")
+        return c.JSON(http.StatusOK, map[string]any{"authenticated": false})
+    }
+
+    // Print claims (for debugging; remove in production for privacy/security)
+    log.Println("[AuthStatus] JWT claims:", claims)
+
+    return c.JSON(http.StatusOK, map[string]any{
+        "authenticated": true,
+        "email":         email,
+    })
 }
+

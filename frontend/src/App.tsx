@@ -7,6 +7,7 @@ import SignUpPage from "@/pages/SignUpPage";
 import Layout from "@/components/ui/layout";
 import Profile from "@/pages/Profile";
 import { ProtectedRoute } from "@/components/ui/ProtectedRoute";
+import { PublicRoute } from "@/components/ui/PublicRoute";
 
 
 function App() {
@@ -16,8 +17,8 @@ function App() {
 
         <Route path="/" element={<HomePage />} />
         <Route path="/schedule" element={<ProtectedRoute><SchedulerPage /></ProtectedRoute>} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+        <Route path="/signup" element={<PublicRoute><SignUpPage /></PublicRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
       </Route>
