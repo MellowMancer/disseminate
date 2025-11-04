@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner'; 
+import { toast } from 'sonner';
+import { Twitter, Instagram } from 'lucide-react';
+import { SocialMediaCard } from '@/components/ui/social-media-card';
 
 const Profile: React.FC = () => {
     const [twitterLinked, setTwitterLinked] = useState<boolean | null>(null);
@@ -10,10 +12,6 @@ const Profile: React.FC = () => {
     
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-
-    const handleTwitterLogin = () => {
-        window.location.href = '/api/twitter/link/begin';
-    };
 
     const fetchTwitterStatus = useCallback(async () => {
         try {
@@ -77,52 +75,46 @@ const Profile: React.FC = () => {
 
 
 
-    const renderTwitterStatus = () => {
-        if (twitterLinked === null) {
-            return <p>Loading Twitter status...</p>;
-        }
-        if (twitterLinked && twitterTokenValid) {
-            return <p style={{ color: 'green' }}>Twitter is connected and ready to post.</p>;
-        }
-        if (twitterLinked && !twitterTokenValid) {
-            return (
-                <>
-                    <p style={{ color: 'orange' }}>Your Twitter connection has expired.</p>
-                    <button onClick={handleTwitterLogin}>Reauthorize Twitter</button>
-                </>
-            );
-        }
-        return <button onClick={handleTwitterLogin}>Connect Twitter</button>;
-    };
-
-    const renderInstagramStatus = () => {
-        if (instagramLinked === null) {
-            return <p>Loading Instagram status...</p>;
-        }
-        if (instagramLinked && instagramTokenValid) {
-            return <p style={{ color: 'green' }}>Instagram is connected and ready to post.</p>;
-        }
-        if (instagramLinked && !instagramTokenValid) {
-            return (
-                <>
-                    <p style={{ color: 'orange' }}>Your Instagram connection has expired.</p>
-                    <button onClick={() => window.location.href = '/api/instagram/link/begin'}>Reauthorize Instagram</button>
-                </>
-            );
-        }
-        return <button onClick={() => window.location.href = '/api/instagram/link/begin'}>Connect Instagram</button>;
-    }
-
     return (
-        <div>
-            <h1>Profile Page</h1>
-            <p>Welcome to your profile. Manage your social media connections here.</p>
-            
-            <hr style={{ margin: '20px 0' }} />
+        <div className="w-full max-w-4xl mx-auto space-y-8">
+            <div className="space-y-3">
+                <h1 className="text-3xl md:text-4xl font-bold text-primary">Profile & Connections</h1>
+                <p className="text-base text-muted-foreground">Manage your social media accounts and posting credentials</p>
+            </div>
 
-            <h3>Connections</h3>
-            {renderTwitterStatus()}
-            {renderInstagramStatus()}
+            <div className="grid gap-6 md:grid-cols-2">
+                {/* Twitter Card */}
+                <SocialMediaCard
+                    platformName="Twitter / X"
+                    platformDescription="Connect your Twitter account"
+                    icon={Twitter}
+                    iconBackgroundClass="bg-twitter"
+                    isLinked={twitterLinked}
+                    isTokenValid={twitterTokenValid}
+                    linkEndpoint="/api/twitter/link/begin"
+                    unlinkEndpoint="/api/twitter/unlink"
+                    onStatusChange={() => {
+                        setTwitterLinked(false);
+                        setTwitterTokenValid(false);
+                    }}
+                />
+
+                {/* Instagram Card */}
+                <SocialMediaCard
+                    platformName="Instagram"
+                    platformDescription="Connect your Instagram Business account"
+                    icon={Instagram}
+                    iconBackgroundClass="bg-gradient-to-br from-[var(--color-instagram-from)] via-[var(--color-instagram-via)] to-[var(--color-instagram-to)]"
+                    isLinked={instagramLinked}
+                    isTokenValid={instagramTokenValid}
+                    linkEndpoint="/api/instagram/link/begin"
+                    unlinkEndpoint="/api/instagram/unlink"
+                    onStatusChange={() => {
+                        setInstagramLinked(false);
+                        setInstagramTokenValid(false);
+                    }}
+                />
+            </div>
         </div>
     );
 };
