@@ -53,7 +53,7 @@ export function Navbar() {
                                 <button
                                     onClick={handleHomeButton}
                                     aria-label="Home"
-                                    className="bg-transparent border-none p-0 m-0 cursor-pointer"
+                                    className="bg-transparent border-none p-0 m-0 cursor-pointer text-foreground"
                                     type="button"
                                 >
                                     Home
@@ -65,7 +65,7 @@ export function Navbar() {
                                 <button
                                     onClick={handleAboutButton}
                                     aria-label="About"
-                                    className="bg-transparent border-none p-0 m-0 cursor-pointer"
+                                    className="bg-transparent border-none p-0 m-0 cursor-pointer text-foreground"
                                     type="button"
                                 >
                                     About
@@ -79,7 +79,7 @@ export function Navbar() {
                                     <button
                                         onClick={handleProfileButton}
                                         aria-label="Profile"
-                                        className="bg-transparent border-none p-0 m-0 cursor-pointer"
+                                        className="bg-transparent border-none p-0 m-0 cursor-pointer text-foreground"
                                         type="button"
                                     >
                                         Profile & Keys
@@ -94,14 +94,14 @@ export function Navbar() {
                                 {authenticated ? (<button
                                     onClick={handleLogout}
                                     aria-label="Logout"
-                                    className="bg-transparent border-none p-0 m-0 cursor-pointer"
+                                    className="bg-transparent border-none p-0 m-0 cursor-pointer text-foreground"
                                     type="button"
                                 >
                                     Logout
                                 </button>) : (<button
                                     onClick={handleLoginButton}
                                     aria-label="Login"
-                                    className="bg-transparent border-none p-0 m-0 cursor-pointer"
+                                    className="bg-transparent border-none p-0 m-0 cursor-pointer text-foreground"
                                     type="button"
                                 >
                                     Login
