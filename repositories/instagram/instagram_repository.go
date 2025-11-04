@@ -8,9 +8,9 @@ import (
 	"io"
 	"log"
 
+	repo "backend/repositories"
 	repo_cloudflare "backend/repositories/cloudflare"
 	repo_supabase "backend/repositories/supabase"
-	"mime"
 	"mime/multipart"
 	"net/http"
 	_ "net/http/httputil"
@@ -54,7 +54,6 @@ func (i *instagramRepositoryImpl) SaveToken(accessToken string, userID string, i
 		ExpiresAt:   expirationTime,
 	}
 
-	// Check if a row exists for the userID by fetching credentials
 	existingAccessToken, _, err := i.GetCredentials(userID)
 	if err != nil && err.Error() != "instagram token not found" {
 		return err
@@ -65,46 +64,51 @@ func (i *instagramRepositoryImpl) SaveToken(accessToken string, userID string, i
 		return err
 	}
 
-	client := &http.Client{}
 	if existingAccessToken == "" {
-		// No existing token, create a new one with POST
-		url := i.repo_supabase.SupabaseURL + "instagram"
-		req, err := i.newRequest("POST", url, bytes.NewBuffer(payloadBytes))
-		if err != nil {
-			return err
-		}
+		return i.createToken(payloadBytes)
+	}
+	return i.updateToken(userID, payloadBytes)
+}
 
-		resp, err := client.Do(req)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-			body, _ := io.ReadAll(resp.Body)
-			return fmt.Errorf("failed to create instagram tokens, status: %d, response: %s", resp.StatusCode, string(body))
-		}
-	} else {
-		// Update existing token with PATCH
-		url := i.repo_supabase.SupabaseURL + "instagram?user_id=eq." + userID
-
-		req, err := i.newRequest("PATCH", url, bytes.NewBuffer(payloadBytes))
-		if err != nil {
-			return err
-		}
-
-		resp, err := client.Do(req)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			body, _ := io.ReadAll(resp.Body)
-			return fmt.Errorf("failed to update instagram tokens, status: %d, response: %s", resp.StatusCode, string(body))
-		}
+func (i *instagramRepositoryImpl) createToken(payloadBytes []byte) error {
+	url := i.repo_supabase.SupabaseURL + "instagram"
+	req, err := repo.NewRequest(i.repo_supabase, "POST", url, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return err
 	}
 
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to create instagram tokens, status: %d, response: %s", resp.StatusCode, string(body))
+	}
+	return nil
+}
+
+func (i *instagramRepositoryImpl) updateToken(userID string, payloadBytes []byte) error {
+	url := i.repo_supabase.SupabaseURL + "instagram?user_id=eq." + userID
+	req, err := repo.NewRequest(i.repo_supabase, "PATCH", url, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return err
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to update instagram tokens, status: %d, response: %s", resp.StatusCode, string(body))
+	}
 	return nil
 }
 
@@ -321,36 +325,36 @@ func (i *instagramRepositoryImpl) UploadMedia(file multipart.File, fileExtension
 }
 
 func (i *instagramRepositoryImpl) WaitForContainerReady(accessToken string, containerID string) (string, error) {
-    const maxWait = 2 * time.Minute 
-    const initialBackoff = 2 * time.Second
-    backoff := initialBackoff
+	const maxWait = 2 * time.Minute
+	const initialBackoff = 2 * time.Second
+	backoff := initialBackoff
 
-    start := time.Now()
+	start := time.Now()
 
-    for {
-        status, err := i.containerStatus(accessToken, containerID)
-        if err != nil {
-            return "", fmt.Errorf("error getting container status: %w", err)
-        }
-        log.Printf("[WAIT_CONTAINER] --- Current container status: %s", status)
+	for {
+		status, err := i.containerStatus(accessToken, containerID)
+		if err != nil {
+			return "", fmt.Errorf("error getting container status: %w", err)
+		}
+		log.Printf("[WAIT_CONTAINER] --- Current container status: %s", status)
 
-        if status == "FINISHED" {
-            log.Println("[WAIT_CONTAINER] --- Container is ready")
-            return status, nil
-        }
+		if status == "FINISHED" {
+			log.Println("[WAIT_CONTAINER] --- Container is ready")
+			return status, nil
+		}
 
-        if time.Since(start) > maxWait {
-            return "", fmt.Errorf("timeout waiting for container to be ready, last status: %s", status)
-        }
+		if time.Since(start) > maxWait {
+			return "", fmt.Errorf("timeout waiting for container to be ready, last status: %s", status)
+		}
 
-        log.Printf("[WAIT_CONTAINER] --- Container not ready, retrying after %v...", backoff)
-        time.Sleep(backoff)
+		log.Printf("[WAIT_CONTAINER] --- Container not ready, retrying after %v...", backoff)
+		time.Sleep(backoff)
 
-        // Gradually increase backoff but cap it
-        if backoff < 10*time.Second {
-            backoff *= 2
-        }
-    }
+		// Gradually increase backoff but cap it
+		if backoff < 10*time.Second {
+			backoff *= 2
+		}
+	}
 }
 
 func (i *instagramRepositoryImpl) containerStatus(accessToken string, containerID string) (string, error) {
@@ -423,11 +427,11 @@ func (i *instagramRepositoryImpl) CreateContainer(accessToken string, instagramI
 		if !isCarouselItem {
 			q.Add("media_type", "REELS")
 			log.Printf("[CREATE_CONTAINER] --- Changed media_type to REELS for video post")
-		} else{
+		} else {
 			q.Add("media_type", mediaType)
 		}
 		q.Add("video_url", mediaURL)
-		
+
 		log.Println("[CREATE_CONTAINER] --- Added video_url to query params")
 	default:
 		log.Printf("[CREATE_CONTAINER] --- Unsupported mediaType: %s", mediaType)
@@ -466,167 +470,141 @@ func (i *instagramRepositoryImpl) CreateContainer(accessToken string, instagramI
 }
 
 func (i *instagramRepositoryImpl) CreateCarouselContainer(accessToken string, instagramID string, caption string, containerIDs []string) (string, error) {
-    log.Println("[CREATE_CAROUSEL_CONTAINER] --- Starting carousel container creation")
-    log.Printf("[CREATE_CAROUSEL_CONTAINER] --- instagramID: %s, caption length: %d, number of children: %d", instagramID, len(caption), len(containerIDs))
+	log.Println("[CREATE_CAROUSEL_CONTAINER] --- Starting carousel container creation")
+	log.Printf("[CREATE_CAROUSEL_CONTAINER] --- instagramID: %s, caption length: %d, number of children: %d", instagramID, len(caption), len(containerIDs))
 
-    url := instagram_api_path + instagramID + "/media"
-    log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Request URL: %s", url)
+	url := instagram_api_path + instagramID + "/media"
+	log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Request URL: %s", url)
 
-    req, err := http.NewRequest("POST", url, nil)
-    if err != nil {
-        log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Error creating request: %v", err)
-        return "", err
-    }
-    req.Header.Set("Content-Type", "application/json")
-    req.Header.Set("Authorization", "Bearer "+accessToken)
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Error creating request: %v", err)
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+accessToken)
 
-    q := req.URL.Query()
-    q.Add("caption", caption)
-    q.Add("media_type", "CAROUSEL")
-    log.Println("[CREATE_CAROUSEL_CONTAINER] --- Added caption and media_type=CAROUSEL to query params")
+	q := req.URL.Query()
+	q.Add("caption", caption)
+	q.Add("media_type", "CAROUSEL")
+	log.Println("[CREATE_CAROUSEL_CONTAINER] --- Added caption and media_type=CAROUSEL to query params")
 
-    for idx, containerID := range containerIDs {
-        q.Add(fmt.Sprintf("children[%d]", idx), containerID)
-        log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Added child container ID at index %d: %s", idx, containerID)
-    }
+	for idx, containerID := range containerIDs {
+		q.Add(fmt.Sprintf("children[%d]", idx), containerID)
+		log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Added child container ID at index %d: %s", idx, containerID)
+	}
 
-    req.URL.RawQuery = q.Encode()
-    log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Final request URL with query params: %s", req.URL.String())
+	req.URL.RawQuery = q.Encode()
+	log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Final request URL with query params: %s", req.URL.String())
 
 	// Try sending the request and handle potential transient errors
-    resp, err := tryContainerCreation(req)
+	resp, err := tryContainerCreation(req)
 	if err != nil {
 		return "", err
 	}
 
-    var result struct {
-        ID string `json:"id"`
-    }
-    if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-        log.Printf("[CREATE_CAROUSEL_CONTAINER] --- JSON decode error: %v", err)
-        return "", err
-    }
+	var result struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		log.Printf("[CREATE_CAROUSEL_CONTAINER] --- JSON decode error: %v", err)
+		return "", err
+	}
 
-    log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Successfully created carousel container with ID: %s", result.ID)
-    return result.ID, nil
+	log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Successfully created carousel container with ID: %s", result.ID)
+	return result.ID, nil
 }
 
-func tryContainerCreation(req *http.Request) (*http.Response, error){
-    const maxRetries = 5
-    backoff := 2 * time.Second
-    client := &http.Client{}
+func tryContainerCreation(req *http.Request) (*http.Response, error) {
+	const maxRetries = 5
+	backoff := 2 * time.Second
+	client := &http.Client{}
 
-    for attempt := 1; attempt <= maxRetries; attempt++ {
-        log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Attempt %d/%d: Sending HTTP request to Instagram API...", attempt, maxRetries)
-        resp, err := client.Do(req)
-        if err != nil {
-            log.Printf("[CREATE_CAROUSEL_CONTAINER] --- HTTP request error: %v", err)
-            return nil, err
-        }
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Attempt %d/%d: Sending HTTP request to Instagram API...", attempt, maxRetries)
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Printf("[CREATE_CAROUSEL_CONTAINER] --- HTTP request error: %v", err)
+			return nil, err
+		}
 
-        if resp.StatusCode == 200 {
-            log.Println("[CREATE_CAROUSEL_CONTAINER] --- Request succeeded with status 200")
-            return resp, nil
-        }
+		if resp.StatusCode == 200 {
+			log.Println("[CREATE_CAROUSEL_CONTAINER] --- Request succeeded with status 200")
+			return resp, nil
+		}
 
-        body, _ := io.ReadAll(resp.Body)
-        resp.Body.Close()
-        log.Printf("[CREATE_CAROUSEL_CONTAINER] --- ERROR response body: %s", string(body))
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		log.Printf("[CREATE_CAROUSEL_CONTAINER] --- ERROR response body: %s", string(body))
 
-        // Check if error is transient by inspecting the body
-        var apiErr struct {
-            Error struct {
-                IsTransient bool `json:"is_transient"`
-                Message string  `json:"message"`
-            } `json:"error"`
-        }
-        if err := json.Unmarshal(body, &apiErr); err == nil && apiErr.Error.IsTransient {
-            log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Transient error detected: %s", apiErr.Error.Message)
-            if attempt < maxRetries {
-                log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Retrying after %v...", backoff)
-                time.Sleep(backoff)
-                backoff *= 2
-                continue
-            }
-            return nil, fmt.Errorf("transient error after %d attempts: %s", attempt, apiErr.Error.Message)
-        }
+		// Check if error is transient by inspecting the body
+		var apiErr struct {
+			Error struct {
+				IsTransient bool   `json:"is_transient"`
+				Message     string `json:"message"`
+			} `json:"error"`
+		}
+		if err := json.Unmarshal(body, &apiErr); err == nil && apiErr.Error.IsTransient {
+			log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Transient error detected: %s", apiErr.Error.Message)
+			if attempt < maxRetries {
+				log.Printf("[CREATE_CAROUSEL_CONTAINER] --- Retrying after %v...", backoff)
+				time.Sleep(backoff)
+				backoff *= 2
+				continue
+			}
+			return nil, fmt.Errorf("transient error after %d attempts: %s", attempt, apiErr.Error.Message)
+		}
 
-        return nil, fmt.Errorf("failed to create carousel container, status %d: %s", resp.StatusCode, string(body))
-    }
+		return nil, fmt.Errorf("failed to create carousel container, status %d: %s", resp.StatusCode, string(body))
+	}
 
-    return nil, fmt.Errorf("max retries (%d) exceeded in tryContainerCreation", maxRetries)
+	return nil, fmt.Errorf("max retries (%d) exceeded in tryContainerCreation", maxRetries)
 }
-
-
 
 func (i *instagramRepositoryImpl) PublishMedia(accessToken string, instagramID string, creationID string) (string, error) {
-    log.Println("[PUBLISH_MEDIA] --- Starting media publish")
-    log.Printf("[PUBLISH_MEDIA] --- instagramID: %s, creationID: %s", instagramID, creationID)
+	log.Println("[PUBLISH_MEDIA] --- Starting media publish")
+	log.Printf("[PUBLISH_MEDIA] --- instagramID: %s, creationID: %s", instagramID, creationID)
 
-    url := instagram_api_path + instagramID + "/media_publish"
-    log.Printf("[PUBLISH_MEDIA] --- Request URL: %s", url)
+	url := instagram_api_path + instagramID + "/media_publish"
+	log.Printf("[PUBLISH_MEDIA] --- Request URL: %s", url)
 
-    req, err := http.NewRequest("POST", url, nil)
-    if err != nil {
-        log.Printf("[PUBLISH_MEDIA] --- Error creating request: %v", err)
-        return "", err
-    }
-    req.Header.Set("Content-Type", "application/json")
-    req.Header.Set("Authorization", "Bearer "+accessToken)
-
-    q := req.URL.Query()
-    q.Add("creation_id", creationID)
-    req.URL.RawQuery = q.Encode()
-    log.Printf("[PUBLISH_MEDIA] --- Final request URL with query: %s", req.URL.String())
-
-    client := &http.Client{}
-    log.Println("[PUBLISH_MEDIA] --- Sending HTTP request to Instagram API...")
-    resp, err := client.Do(req)
-    if err != nil {
-        log.Printf("[PUBLISH_MEDIA] --- HTTP request error: %v", err)
-        return "", err
-    }
-    defer resp.Body.Close()
-    log.Printf("[PUBLISH_MEDIA] --- HTTP response status: %d", resp.StatusCode)
-
-    if resp.StatusCode != 200 {
-        body, _ := io.ReadAll(resp.Body)
-        log.Printf("[PUBLISH_MEDIA] --- ERROR response body: %s", string(body))
-        return "", fmt.Errorf("failed to publish media, status %d: %s", resp.StatusCode, string(body))
-    }
-
-    var result struct {
-        ID string `json:"id"`
-    }
-    if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-        log.Printf("[PUBLISH_MEDIA] --- JSON decode error: %v", err)
-        return "", err
-    }
-
-    log.Printf("[PUBLISH_MEDIA] --- Media published successfully with ID: %s", result.ID)
-    return result.ID, nil
-}
-
-
-func (i *instagramRepositoryImpl) newRequest(method, url string, body io.Reader) (*http.Request, error) {
-	req, err := http.NewRequest(method, url, body)
+	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
-		return nil, err
+		log.Printf("[PUBLISH_MEDIA] --- Error creating request: %v", err)
+		return "", err
 	}
-	req.Header.Set("apikey", i.repo_supabase.SupabaseKey)
-	req.Header.Set("Authorization", "Bearer "+i.repo_supabase.SupabaseKey)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+accessToken)
 
-	if method != "GET" {
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Prefer", "return=representation")
-	}
-	return req, nil
-}
+	q := req.URL.Query()
+	q.Add("creation_id", creationID)
+	req.URL.RawQuery = q.Encode()
+	log.Printf("[PUBLISH_MEDIA] --- Final request URL with query: %s", req.URL.String())
 
-func getFileExtension(mimeType string) (string, error) {
-	exts, err := mime.ExtensionsByType(mimeType)
-	if err != nil || len(exts) == 0 {
-		return "", fmt.Errorf("no extension found for MIME type: %s", mimeType)
+	client := &http.Client{}
+	log.Println("[PUBLISH_MEDIA] --- Sending HTTP request to Instagram API...")
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("[PUBLISH_MEDIA] --- HTTP request error: %v", err)
+		return "", err
 	}
-	return exts[0], nil
+	defer resp.Body.Close()
+	log.Printf("[PUBLISH_MEDIA] --- HTTP response status: %d", resp.StatusCode)
+
+	if resp.StatusCode != 200 {
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("[PUBLISH_MEDIA] --- ERROR response body: %s", string(body))
+		return "", fmt.Errorf("failed to publish media, status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var result struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		log.Printf("[PUBLISH_MEDIA] --- JSON decode error: %v", err)
+		return "", err
+	}
+
+	log.Printf("[PUBLISH_MEDIA] --- Media published successfully with ID: %s", result.ID)
+	return result.ID, nil
 }
