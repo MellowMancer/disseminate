@@ -24,8 +24,11 @@ COPY main.go ./
 COPY handlers/ ./handlers/
 COPY middlewares/ ./middlewares/
 COPY models/ ./models/
+COPY repositories/ ./repositories/
 COPY routes/ ./routes/
 COPY services/ ./services/
+
+
 
 COPY --from=build-frontend /app/frontend/dist ./frontend/dist
 
