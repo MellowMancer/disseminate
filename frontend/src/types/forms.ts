@@ -1,7 +1,7 @@
 export type FormDataState = {
   importData: {};
   twitter: { content: string };
-  youtube: { description: string; tags: string };
+  youtube: { title: string; description: string; tags: string };
   instagram: { caption: string };
   reddit: {  };
   mastodon: {  };

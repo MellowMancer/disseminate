@@ -23,12 +23,12 @@ type MediaItemType = {
 
 const initialFormData: FormDataState = {
   importData: {},
-  twitter: { apiKey: '', apiSecret: '', accessToken: '', accessSecret: '', content: '' },
-  youtube: { apiKey: '', accessToken: '', title: '', description: '', tags: '' },
-  instagram: { username: '', password: '', caption: '' },
-  reddit: { clientId: '', clientSecret: '', username: '', password: '', subreddit: '', title: '', content: '' },
-  mastodon: { instanceUrl: '', accessToken: '', content: '' },
-  artstation: { username: '', password: '', title: '', description: '' },
+  twitter: { content: '' },
+  youtube: { title: '', description: '', tags: '' },
+  instagram: { caption: '' },
+  reddit: {  },
+  mastodon: {  },
+  artstation: {  },
 };
 
 const createInitialSelectedMedia = (): Record<TabKey, Set<string>> => ({
