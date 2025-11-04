@@ -42,7 +42,7 @@ const Carousel: React.FC<CarouselProps> = ({
     const [dimensions, setDimensions] = useState<(Dimensions | null)[]>(mediaItems.map(() => null));
     const [containerHeight, setContainerHeight] = useState<number>(fixedHeight);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
-    const border = " bg-card border-card-outline border-1 border-t-24 rounded-md shadow-(--shadow-override) md:shadow-(--shadow-override-md) lg:shadow-(--shadow-override-lg)";
+    const border = " bg-card border-border border-1 border-t-24 rounded-md shadow-(--shadow-override) md:shadow-(--shadow-override-md) lg:shadow-(--shadow-override-lg)";
 
     // Transition wrapping for slide changes
     const changeSlide = (newIndex: number) => {
@@ -258,7 +258,7 @@ const Carousel: React.FC<CarouselProps> = ({
                     <Button onClick={prev}>Prev</Button>
                     <Button onClick={next}>Next</Button>
                 </div>
-                <div className="text-white bg-highlight text-sm py-2 px-3 rounded-md absolute right-0">
+                <div className="text-primary-foreground bg-primary text-sm py-2 px-3 rounded-md absolute right-0">
                     {currentIndex + 1} / {mediaItems.length}
                 </div>
             </div>

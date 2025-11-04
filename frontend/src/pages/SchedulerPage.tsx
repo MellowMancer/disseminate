@@ -262,7 +262,7 @@ export function SchedulerPage() {
                   </TabsContent>
                 </Tabs>
                 <CardFooter className="mt-8 p-0">
-                  <Button type="submit" className="w-full bg-button text-white" disabled={isSubmitting}>
+                  <Button type="submit" className="w-full bg-primary text-primary-foreground" disabled={isSubmitting}>
                     {isSubmitting ? 'Scheduling...' : `Schedule for ${activeTab}`}
                   </Button>
                 </CardFooter>

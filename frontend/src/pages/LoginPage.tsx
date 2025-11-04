@@ -122,9 +122,6 @@ export default function LoginPage() {
             <div className="block text-gray-700 text-xs italic max-w-xs mx-auto text-start">
               Supports Bluesky, Twitter, Instagram, Youtube, Mastodon, Artstation, Reddit
             </div>
-            <div className="block text-gray-700 text-xs italic max-w-xs mx-auto text-start">
-              Users will need to set up their developer accounts to use Disseminate
-            </div>
           </p>
         </Card>
       </DynamicShadowWrapper>

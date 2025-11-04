@@ -38,14 +38,15 @@ export default function HomePage() {
         <div className="flex flex-col md:flex-row w-full h-full">
             {/* Left half */}
             <div className="md:w-1/2 flex flex-col justify-center pr-8 md:pr-16 mb-16 md:mb-0">
-                <h1 className="text-3xl md:text-5xl font-semibold mb-2 md:mb-6 text-highlight">Disseminate</h1>
-                <p className="text-l md:text-xl text-secondary-text mb-8">
+                <h1 className="text-4xl md:text-6xl font-bold mb-4 md:mb-6 text-primary">Disseminate</h1>
+                <p className="text-base md:text-lg text-muted-foreground mb-8 leading-relaxed">
                     Post to multiple social media platforms from a single dashboard.
                     Supports Bluesky, Twitter, Instagram, Youtube, Mastodon, Artstation, Reddit
                 </p>
-                <nav className="space-x-4">
+                <nav>
                     <Button
                         onClick={handleStartPostingClick}
+                        size="lg"
                     >
                         Start Posting
                     </Button>
@@ -56,13 +57,13 @@ export default function HomePage() {
             <div className="md:w-1/2 flex flex-col justify-center text-gray-900">
                 <DynamicShadowWrapper>
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Upload your content</CardTitle>
+                        <CardHeader className="space-y-2">
+                            <CardTitle className="text-2xl">Upload your content</CardTitle>
                         </CardHeader>
                         <Form {...form}>
                             <form
                                 onSubmit={form.handleSubmit(onSubmit)}
-                                className="max-w-lg mx-auto space-y-6"
+                                className="max-w-lg mx-auto space-y-6 px-6 pb-6"
                             >
                                 <FormField
                                     control={form.control}
@@ -83,28 +84,31 @@ export default function HomePage() {
                                             field.onChange(files);
                                         };
                                         return (
-                                            <FormItem>
-                                                <FormLabel className="text-highlight font-medium">Select File(s)</FormLabel>
+                                            <FormItem className="space-y-3">
+                                                <FormLabel className="text-sm font-medium">Select File(s)</FormLabel>
                                                 <FormControl className="flex-col justify-center border-1 m-0 p-0 h-10">
                                                     <Input
                                                         type="file"
                                                         multiple
                                                         onChange={handleFileChange}
-                                                        className="file:bg-button file:text-button-text file:border-none file:rounded-md file:h-full file:py-2 file:px-2 file:mr-2 file:text-sm file:font-medium cursor-pointer flex-col justify-center text-secondary-text border-card-outline"
+                                                        className="file:bg-primary file:text-primary-foreground file:border-none file:rounded-md file:h-full file:py-2 file:px-3 file:mr-3 file:text-sm file:font-medium cursor-pointer flex-col justify-center text-sm text-muted-foreground border-border"
                                                         accept=".mp4, .avi, .mkv, .ogg, .webm, .m4v, .mov, .jpg, .webp, .HEIC, .HEIC, .png, .jpeg, .tiff "
                                                     />
                                                 </FormControl>
-                                                <FormDescription className="text-secondary-text">You can choose one or more files. <div className="text-s text-secondary-text"><i>Supports .mp4, .avi, .mkv, .ogg, .webm, .m4v, .mov, .jpg, .webp, .HEIC, .HEIC, .png, .jpeg, .tiff </i></div></FormDescription>
-                                                <FormMessage />
+                                                <FormDescription className="text-sm text-muted-foreground leading-relaxed">
+                                                    You can choose one or more files.
+                                                    <div className="text-xs text-muted-foreground mt-1"><i>Supports .mp4, .avi, .mkv, .ogg, .webm, .m4v, .mov, .jpg, .webp, .HEIC, .png, .jpeg, .tiff</i></div>
+                                                </FormDescription>
+                                                <FormMessage className="text-sm" />
                                             </FormItem>
                                         )
                                     }}
                                 />
 
                                 {form.watch("files") && form.watch("files").length > 0 && (
-                                    <div className="mt-4 text-sm text-secondary-text">
-                                        <strong>Selected files:</strong>
-                                        <ul className="list-inside list-disc">
+                                    <div className="space-y-2">
+                                        <p className="text-sm font-medium text-primary">Selected files:</p>
+                                        <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
                                             {Array.from(form.watch("files")).map((file) => (
                                                 <li key={file.name}>
                                                     {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
@@ -114,7 +118,7 @@ export default function HomePage() {
                                     </div>
                                 )}
 
-                                <Button type="submit" className="w-max bg-button text-button-text">
+                                <Button type="submit" size="lg" className="w-full bg-primary text-primary-foreground">
                                     Upload
                                 </Button>
                             </form>
