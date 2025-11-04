@@ -3,23 +3,170 @@
 @import './assets/fonts.css';
 @import './App.css';
 
+/* Default Theme (Lavender) */
 @theme {
-    --color-highlight: #292C3C;
-    --color-secondary-text: #3E4257;
-    --color-secondary: #386150;
-    --color-accent: #FFEAEC;
+    /* Background and foreground colors */
     --color-background: #CDD6F4;
+    --color-foreground: #292C3C;
 
-    --color-card-outline: #554488;
-
+    /* Card colors */
     --color-card: #C9CFF0;
+    --color-card-foreground: #292C3C;
 
-    --color-button: #292C3C;
-    --color-button-text: #E6EBFE;
+    /* Popover colors */
+    --color-popover: #C9CFF0;
+    --color-popover-foreground: #292C3C;
 
+    /* Primary colors (main brand color) */
+    --color-primary: #292C3C;
+    --color-primary-foreground: #E6EBFE;
+
+    /* Secondary colors */
+    --color-secondary: #386150;
+    --color-secondary-foreground: #E6EBFE;
+
+    /* Muted colors (for subtle backgrounds) */
+    --color-muted: #B5BEE8;
+    --color-muted-foreground: #3E4257;
+
+    /* Accent colors */
+    --color-accent: #FFEAEC;
+    --color-accent-foreground: #292C3C;
+
+    /* Destructive colors (for errors/delete actions) */
+    --color-destructive: #EF4488;
+    --color-destructive-foreground: #FFFFFF;
+
+    /* Success colors (for active/connected states) */
+    --color-success: #4CAF50;
+    --color-success-foreground: #FFFFFF;
+
+    /* Warning colors (for expired/attention states) */
+    --color-warning: #FF9800;
+    --color-warning-foreground: #000000;
+
+    /* Social media brand colors */
+    --color-twitter: #1DA1F2;
+    --color-twitter-foreground: #FFFFFF;
+    --color-instagram-from: #833AB4;
+    --color-instagram-via: #E1306C;
+    --color-instagram-to: #FD1D1D;
+
+    /* Border colors */
+    --color-border: #554488;
+    --color-input: #554488;
+    --color-input-background: #CDD6F4;
+
+    /* Ring color (for focus states) */
+    --color-ring: #554488;
+
+    /* Border radius */
+    --radius: 0.5rem;
+
+    /* Custom shadow overrides */
     --shadow-override-lg: 24px 24px 0px 0px #282055;
     --shadow-override-md: 16px 16px 0px 0px #282055;
     --shadow-override: 9px 9px 0px 0px #282055;
 
+    /* Font family */
     --firas: "Fira Sans", sans-serif;
+}
+
+/* Light Theme */
+[data-theme="light"] {
+    --color-background: #F8F9FA;
+    --color-foreground: #1A1A1A;
+
+    --color-card: #FFFFFF;
+    --color-card-foreground: #1A1A1A;
+
+    --color-popover: #FFFFFF;
+    --color-popover-foreground: #1A1A1A;
+
+    --color-primary: #2563EB;
+    --color-primary-foreground: #FFFFFF;
+
+    --color-secondary: #64748B;
+    --color-secondary-foreground: #FFFFFF;
+
+    --color-muted: #F1F5F9;
+    --color-muted-foreground: #64748B;
+
+    --color-accent: #F0F9FF;
+    --color-accent-foreground: #0C4A6E;
+
+    --color-destructive: #DC2626;
+    --color-destructive-foreground: #FFFFFF;
+
+    --color-success: #16A34A;
+    --color-success-foreground: #FFFFFF;
+
+    --color-warning: #EA580C;
+    --color-warning-foreground: #FFFFFF;
+
+    --color-twitter: #1DA1F2;
+    --color-twitter-foreground: #FFFFFF;
+    --color-instagram-from: #833AB4;
+    --color-instagram-via: #E1306C;
+    --color-instagram-to: #FD1D1D;
+
+    --color-border: #E2E8F0;
+    --color-input: #CBD5E1;
+    --color-input-background: #FFFFFF;
+
+    --color-ring: #2563EB;
+
+    /* Custom shadow overrides */
+    --shadow-override-lg: 24px 24px 0px 0px #282055;
+    --shadow-override-md: 16px 16px 0px 0px #282055;
+    --shadow-override: 9px 9px 0px 0px #282055;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+    --color-background: #232426;
+    --color-foreground: #EDEDED;
+
+    --color-card: #19191b;
+    --color-card-foreground: #EDEDED;
+
+    --color-popover: #e55353;
+    --color-popover-foreground: #EDEDED;
+
+    --color-primary: #db50e0;
+    --color-primary-foreground: #FFFFFF;
+
+    --color-secondary: #4B5563;
+    --color-secondary-foreground: #F9FAFB;
+
+    --color-muted: #27272A;
+    --color-muted-foreground: #A1A1AA;
+
+    --color-accent: #7f1e8a;
+    --color-accent-foreground: #DBEAFE;
+
+    --color-destructive: #EF4444;
+    --color-destructive-foreground: #FFFFFF;
+
+    --color-success: #22C55E;
+    --color-success-foreground: #FFFFFF;
+
+    --color-warning: #F97316;
+    --color-warning-foreground: #FFFFFF;
+
+    --color-twitter: #1DA1F2;
+    --color-twitter-foreground: #FFFFFF;
+    --color-instagram-from: #833AB4;
+    --color-instagram-via: #E1306C;
+    --color-instagram-to: #FD1D1D;
+
+    --color-border: #27272A;
+    --color-input: #3F3F46;
+    --color-input-background: #18181B;
+
+    --color-ring: #f63bea;
+
+    --shadow-override-lg: 24px 24px 0px 0px #552055;
+    --shadow-override-md: 16px 16px 0px 0px #552055;
+    --shadow-override: 9px 9px 0px 0px #282055;
 }
