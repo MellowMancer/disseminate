@@ -1,8 +1,8 @@
 package main
 
 import (
-	"embed"
 	"context"
+	"embed"
 	"fmt"
 	"io/fs"
 	"log"
@@ -34,26 +34,26 @@ import (
 )
 
 type EnvConfig struct {
-	TwitterConsumerKey	string
-	TwitterConsumerSecret	string
-	TwitterCallbackURL		string
+	TwitterConsumerKey    string
+	TwitterConsumerSecret string
+	TwitterCallbackURL    string
 
-	InstagramClientID		string
-	InstagramClientSecret	string
-	InstagramRedirectURL		string
+	InstagramClientID     string
+	InstagramClientSecret string
+	InstagramRedirectURL  string
 
-	SupabaseURL			string
-	SupabaseKey			string
+	SupabaseURL string
+	SupabaseKey string
 
-	CloudflareAccountID		string
-	CloudflareS3APIURL		string
-	CloudflareToken			string
-	CloudflareS3AccessKeyID		string
-	CloudflareS3SecretAccessKey	string
+	CloudflareAccountID         string
+	CloudflareS3APIURL          string
+	CloudflareToken             string
+	CloudflareS3AccessKeyID     string
+	CloudflareS3SecretAccessKey string
 
-	JWTSecret			string
-	SessionSecret			string
-	AppEnv				string
+	JWTSecret     string
+	SessionSecret string
+	AppEnv        string
 }
 
 //go:embed all:frontend/dist
@@ -62,7 +62,7 @@ var embeddedFrontend embed.FS
 const TWITTERCALLBACKPATH = "/twitter/link/callback"
 const INSTAGRAMCALLBACKPATH = "/instagram/link/callback"
 
-func loadEnv() EnvConfig{
+func loadEnv() EnvConfig {
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using environment variables")
 	}
@@ -88,28 +88,27 @@ func loadEnv() EnvConfig{
 	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
 	appEnv := os.Getenv("APP_ENV")
 
-
 	envConfig := EnvConfig{
-		TwitterConsumerKey:        twitterConsumerKey,
-		TwitterConsumerSecret:     twitterConsumerSecret,
-		TwitterCallbackURL:        twitterCallbackURL,
+		TwitterConsumerKey:    twitterConsumerKey,
+		TwitterConsumerSecret: twitterConsumerSecret,
+		TwitterCallbackURL:    twitterCallbackURL,
 
-		InstagramClientID:        instagramClientID,
-		InstagramClientSecret:     instagramClientSecret,
-		InstagramRedirectURL:      instagramRedirectURL,
+		InstagramClientID:     instagramClientID,
+		InstagramClientSecret: instagramClientSecret,
+		InstagramRedirectURL:  instagramRedirectURL,
 
-		SupabaseURL:              supabaseURL,
-		SupabaseKey:              supabaseKey,
+		SupabaseURL: supabaseURL,
+		SupabaseKey: supabaseKey,
 
-		CloudflareAccountID:      cloudflareAccountID,
-		CloudflareS3APIURL:       cloudflareS3APIURL,
-		CloudflareToken:          cloudflareToken,
-		CloudflareS3AccessKeyID:  cloudflareS3AccessKeyID,
+		CloudflareAccountID:         cloudflareAccountID,
+		CloudflareS3APIURL:          cloudflareS3APIURL,
+		CloudflareToken:             cloudflareToken,
+		CloudflareS3AccessKeyID:     cloudflareS3AccessKeyID,
 		CloudflareS3SecretAccessKey: cloudflareS3SecretAccessKey,
-		
-		JWTSecret:                string(jwtSecret),
-		SessionSecret:            sessionSecret,
-		AppEnv:                   appEnv,
+
+		JWTSecret:     string(jwtSecret),
+		SessionSecret: sessionSecret,
+		AppEnv:        appEnv,
 	}
 
 	return envConfig
@@ -130,7 +129,7 @@ func setupServer(envConfig EnvConfig,
 
 	// --- API Routes (These are handled by Go in both dev and prod) ---
 	authGroup := e.Group("/auth")
-	routes.RegisterAuthRoutes(authGroup, userHandler)
+	routes.RegisterAuthRoutes(authGroup, userHandler, []byte(envConfig.JWTSecret))
 
 	apiGroup := e.Group("/api")
 	apiGroup.Use(middlewares.JWTMiddleware([]byte(envConfig.JWTSecret), []string{}))
@@ -248,4 +247,3 @@ func main() {
 	log.Println("Starting server on :8080")
 	e.Logger.Fatal(e.Start(":8080"))
 }
-

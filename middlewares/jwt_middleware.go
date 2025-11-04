@@ -76,7 +76,6 @@ func validateToken(tokenString string, secret []byte) (jwt.MapClaims, error) {
 const default_redirect_path = "/"
 
 // RedirectIfAuthenticated redirects authenticated users away from login/signup pages.
-// It has been refactored to reduce cognitive complexity.
 func RedirectIfAuthenticated(secret []byte) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

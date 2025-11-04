@@ -38,9 +38,6 @@ export function Navbar() {
         navigate("/");
     }
 
-    const handleAboutButton = () => {
-
-    }
 
     return (
         <>
@@ -60,18 +57,6 @@ export function Navbar() {
                                 </button>
                             </NavigationMenuLink>
                         </NavigationMenuItem>
-                        <NavigationMenuItem>
-                            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                                <button
-                                    onClick={handleAboutButton}
-                                    aria-label="About"
-                                    className="bg-transparent border-none p-0 m-0 cursor-pointer text-foreground"
-                                    type="button"
-                                >
-                                    About
-                                </button>
-                            </NavigationMenuLink>
-                        </NavigationMenuItem>
                         {authenticated ?
                             <NavigationMenuItem>
                                 <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
@@ -87,7 +72,7 @@ export function Navbar() {
 
                                 </NavigationMenuLink>
                             </NavigationMenuItem>
-                            : <></>
+                            : null
                         }
                         <NavigationMenuItem>
                             <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
