@@ -72,78 +72,78 @@
     --firas: "Fira Sans", sans-serif;
 }
 
-/* Light Theme */
+/* Light Theme - Purple Accent */
 [data-theme="light"] {
-    --color-background: #F8F9FA;
-    --color-foreground: #1A1A1A;
+    --color-background: #F5F5F5;
+    --color-foreground: #1a1a1a;
 
-    --color-card: #FFFFFF;
-    --color-card-foreground: #1A1A1A;
+    --color-card: #FAFAFA;
+    --color-card-foreground: #1a1a1a;
 
-    --color-popover: #FFFFFF;
-    --color-popover-foreground: #1A1A1A;
+    --color-popover: #FAFAFA;
+    --color-popover-foreground: #1a1a1a;
 
-    --color-primary: #2563EB;
-    --color-primary-foreground: #FFFFFF;
+    --color-primary: #292C3C;
+    --color-primary-foreground: #E6EBFE;
 
-    --color-secondary: #64748B;
-    --color-secondary-foreground: #FFFFFF;
+    --color-secondary: #9d4edd;
+    --color-secondary-foreground: #FAFAFA;
 
-    --color-muted: #F1F5F9;
-    --color-muted-foreground: #64748B;
+    --color-muted: #F0F0F0;
+    --color-muted-foreground: #5a189a;
 
-    --color-accent: #F0F9FF;
-    --color-accent-foreground: #0C4A6E;
+    --color-accent: #7b2cbf;
+    --color-accent-foreground: #3c096c;
 
     --color-destructive: #DC2626;
-    --color-destructive-foreground: #FFFFFF;
+    --color-destructive-foreground: #FAFAFA;
 
     --color-success: #16A34A;
-    --color-success-foreground: #FFFFFF;
+    --color-success-foreground: #FAFAFA;
 
     --color-warning: #EA580C;
-    --color-warning-foreground: #FFFFFF;
+    --color-warning-foreground: #FAFAFA;
 
     --color-twitter: #1DA1F2;
-    --color-twitter-foreground: #FFFFFF;
+    --color-twitter-foreground: #FAFAFA;
     --color-instagram-from: #833AB4;
     --color-instagram-via: #E1306C;
     --color-instagram-to: #FD1D1D;
 
-    --color-border: #E2E8F0;
-    --color-input: #CBD5E1;
-    --color-input-background: #FFFFFF;
+    --color-border: #592c81;
+    --color-input: #9d4edd;
+    --color-input-background: #F0F0F0;
 
-    --color-ring: #2563EB;
+    --color-ring: #9d4edd;
 
     /* Custom shadow overrides */
-    --shadow-override-lg: 24px 24px 0px 0px #282055;
-    --shadow-override-md: 16px 16px 0px 0px #282055;
-    --shadow-override: 9px 9px 0px 0px #282055;
+    --shadow-override-lg: 24px 24px 0px 0px #e0aaff;
+    --shadow-override-md: 16px 16px 0px 0px #e0aaff;
+    --shadow-override: 9px 9px 0px 0px #e0aaff;
 }
 
-/* Dark Theme */
+/* Dark Theme - Dark Grays with Purple Accent */
 [data-theme="dark"] {
-    --color-background: #232426;
-    --color-foreground: #EDEDED;
+    --color-background: #111111;
+    --color-foreground: #ffffff;
 
-    --color-card: #19191b;
-    --color-card-foreground: #EDEDED;
+    --color-card: #1a1a1a;
+    --color-card-foreground: #ffffff;
 
-    --color-popover: #e55353;
-    --color-popover-foreground: #EDEDED;
+    --color-popover: #1a1a1a;
+    --color-popover-foreground: #ffffff;
 
-    --color-primary: #db50e0;
-    --color-primary-foreground: #FFFFFF;
+    --color-primary: #9d4edd;
+    --color-primary-foreground: #ffffff;
 
-    --color-secondary: #4B5563;
-    --color-secondary-foreground: #F9FAFB;
+    --color-secondary: #2a2a2a;
+    --color-secondary-foreground: #ffffff;
 
-    --color-muted: #27272A;
-    --color-muted-foreground: #A1A1AA;
+    --color-muted: #262626;
+    --color-muted-foreground: #d4d4d4;
 
-    --color-accent: #7f1e8a;
-    --color-accent-foreground: #DBEAFE;
+    --color-accent: #7b2cbf;
+    --color-accent-foreground: #ffffff;
 
     --color-destructive: #EF4444;
     --color-destructive-foreground: #FFFFFF;
@@ -160,13 +160,12 @@
     --color-instagram-via: #E1306C;
     --color-instagram-to: #FD1D1D;
 
-    --color-border: #27272A;
-    --color-input: #3F3F46;
-    --color-input-background: #18181B;
+    --color-input: #404040;
+    --color-input-background: #1f1f1f;
 
-    --color-ring: #f63bea;
+    --color-ring: #c77dff;
 
-    --shadow-override-lg: 24px 24px 0px 0px #552055;
-    --shadow-override-md: 16px 16px 0px 0px #552055;
-    --shadow-override: 9px 9px 0px 0px #282055;
+    --shadow-override-lg: 24px 24px 0px 0px #1a1a1a;
+    --shadow-override-md: 16px 16px 0px 0px #1a1a1a;
+    --shadow-override: 9px 9px 0px 0px #1a1a1a;
 }

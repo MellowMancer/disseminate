@@ -58,7 +58,7 @@ export function MobileMenu() {
                     {/* Navigation Items */}
                     <Button
                         variant="ghost"
-                        className="w-full justify-start text-base h-12"
+                        className="w-full justify-start text-base h-12 text-foreground"
                         onClick={() => handleNavigation("/")}
                     >
                         Home
@@ -66,7 +66,7 @@ export function MobileMenu() {
                     
                     <Button
                         variant="ghost"
-                        className="w-full justify-start text-base h-12"
+                        className="w-full justify-start text-base h-12 text-foreground"
                         onClick={() => {}}
                     >
                         About
@@ -75,7 +75,7 @@ export function MobileMenu() {
                     {authenticated && (
                         <Button
                             variant="ghost"
-                            className="w-full justify-start text-base h-12"
+                            className="w-full justify-start text-base h-12 text-foreground"
                             onClick={() => handleNavigation("/profile")}
                         >
                             Profile & Keys
@@ -84,7 +84,7 @@ export function MobileMenu() {
 
                     <Button
                         variant="ghost"
-                        className="w-full justify-start text-base h-12"
+                        className="w-full justify-start text-base h-12 text-foreground"
                         onClick={authenticated ? handleLogout : () => handleNavigation("/login")}
                     >
                         {authenticated ? "Logout" : "Login"}

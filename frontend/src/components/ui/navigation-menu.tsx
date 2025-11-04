@@ -53,7 +53,7 @@ function NavigationMenuItem({
     <DynamicShadowWrapper>
     <NavigationMenuPrimitive.Item
       data-slot="navigation-menu-item"
-      className={cn("relative border-1 rounded-md", className)}
+      className={cn("relative border-1 border-foreground rounded-md", className)}
       {...props}
     />
     </DynamicShadowWrapper>
@@ -61,7 +61,7 @@ function NavigationMenuItem({
 }
 
 const navigationMenuTriggerStyle = cva(
-  "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium hover:bg-border hover:text-primary-foreground focus:bg-border focus:text-primary-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-border data-[state=open]:text-primary-foreground data-[state=open]:focus:bg-border data-[state=open]:bg-border/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1"
+  "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-border hover:text-primary-foreground focus:bg-border focus:text-primary-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-border data-[state=open]:text-primary-foreground data-[state=open]:focus:bg-border data-[state=open]:bg-border/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1"
 )
 
 function NavigationMenuTrigger({

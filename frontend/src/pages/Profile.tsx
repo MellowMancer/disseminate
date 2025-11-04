@@ -76,7 +76,7 @@ const Profile: React.FC = () => {
 
 
     return (
-        <div className="w-full max-w-4xl mx-auto space-y-8">
+        <div className="w-full max-w-4xl mx-auto space-y-8 pt-0 md:pt-12">
             <div className="space-y-3">
                 <h1 className="text-3xl md:text-4xl font-bold text-primary">Profile & Connections</h1>
                 <p className="text-base text-muted-foreground">Manage your social media accounts and posting credentials</p>
