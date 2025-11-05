@@ -25,6 +25,33 @@ interface CarouselProps extends React.HTMLAttributes<HTMLDivElement> {
     maxWidthThreshold?: number;
 }
 
+
+interface SelectionButtonProps {
+    itemId: string;
+    isSelected: boolean;
+    onSelectionChange: (id: string) => void;
+}
+
+export function SelectionButton({ itemId, isSelected, onSelectionChange }: Readonly<SelectionButtonProps>) {
+    return (
+        <button
+            type="button"
+            className={`absolute top-2 right-2 z-10 w-6 h-6 rounded-full border-2 border-white bg-black bg-opacity-50 flex items-center justify-center transition-all ${isSelected ? "bg-blue-500 border-blue-500" : "hover:bg-opacity-70"
+                }`}
+            onClick={() => onSelectionChange(itemId)}
+            aria-pressed={isSelected}
+            aria-label={isSelected ? "Deselect item" : "Select item"}
+        >
+            {isSelected && (
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+            )}
+        </button>
+    );
+}
+
+
 // ---- Utility: Render media item preview ----
 function MediaPreview({
     item,
@@ -151,25 +178,6 @@ const Carousel: React.FC<CarouselProps> = ({
     const isOverridden = overriddenIds.includes(current.id);
     const isSelected = selectedIds.has(current.id);
 
-    // ---- Shared Selection Button ----
-    function SelectionButton({ itemId, isSelected }: Readonly<{ itemId: string, isSelected: boolean }>) {
-        return (
-            <button
-                type="button"
-                className={`absolute top-2 right-2 z-10 w-6 h-6 rounded-full border-2 border-white bg-black bg-opacity-50 flex items-center justify-center transition-all ${isSelected ? 'bg-blue-500 border-blue-500' : 'hover:bg-opacity-70'}`}
-                onClick={() => onSelectionChange(itemId)}
-                aria-pressed={isSelected}
-                aria-label={isSelected ? "Deselect item" : "Select item"}
-            >
-                {isSelected &&
-                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                }
-            </button>
-        );
-    }
-
     // ---- Handle crop complete ----
     const handleCropComplete = (croppedSrc: string) => {
         if (editingIndex === null) return;
@@ -187,7 +195,7 @@ const Carousel: React.FC<CarouselProps> = ({
                     style={{ width: '100%' }}
                 >
                     <MediaPreview item={current} border={border} overrideLabel={isOverridden} playable />
-                    <SelectionButton itemId={current.id} isSelected={isSelected} />
+                    <SelectionButton itemId={current.id} isSelected={isSelected} onSelectionChange={onSelectionChange} />
                     {current.type === "image" &&
                         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Dialog onOpenChange={open => !open && setEditingIndex(null)}>
