@@ -1,7 +1,7 @@
 import React from "react";
 
 const DOT_ROWS = 8;            // Number of rows
-const DOT_COLS = 48;            // Number of columns
+const DOT_COLS = 60;            // Number of columns
 const DOT_SIZE = 4;             // px, diameter of each dot
 const DOT_GAP = 32;             // px, space between dots
 const ANIMATION_DURATION = 5;   // seconds

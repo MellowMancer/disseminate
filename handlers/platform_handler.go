@@ -29,12 +29,9 @@ func NewPlatformHandler(twitterService service_twitter.TwitterService, instagram
 
 func (h *PlatformHandler) PostToPlatform(c echo.Context) error {
 	// This endpoint MUST be protected by JWTMiddleware.
-	ok, email, err := h.userService.IsLoggedIn(c)
+	email, err := h.userService.IsLoggedIn(c)
 	if err != nil {
 		return err
-	}
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not logged in"})
 	}
 
 	platform := c.FormValue("platform")

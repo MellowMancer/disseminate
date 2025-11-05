@@ -6,8 +6,8 @@ body{
 .dot-matrix-dot {
   position: absolute;
   border-radius: 9999px;
-  background: #98a4fa;
-  opacity: 0.6;
+  background: #8656ac;
+  opacity: 0;
   pointer-events: none;
   animation: dotRiseFadeScale 5s linear infinite;
   will-change: opacity, transform;
@@ -16,16 +16,16 @@ body{
 
 @keyframes dotRiseFadeScale {
   0% {
-    opacity: 0.6;
+    opacity: 0.5;
     transform: translateY(0) scale(1);
   }
   50% {
     opacity: 0.3;
-    transform: translateY(-25px) scale(0.8);
+    transform: translateY(-25px) scale(0.6);
   }
   100% {
     opacity: 0;
-    transform: translateY(-50px) scale(0.5);
+    transform: translateY(-40px) scale(0.4);
   }
 }
 

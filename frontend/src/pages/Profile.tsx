@@ -3,77 +3,39 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Twitter, Instagram } from 'lucide-react';
 import { SocialMediaCard } from '@/components/ui/social-media-card';
+import { set } from 'react-hook-form';
 
 const Profile: React.FC = () => {
     const [twitterLinked, setTwitterLinked] = useState<boolean | null>(null);
     const [instagramLinked, setInstagramLinked] = useState<boolean | null>(null);
-    const [twitterTokenValid, setTwitterTokenValid] = useState<boolean | null>(null);
-    const [instagramTokenValid, setInstagramTokenValid] = useState<boolean | null>(null);
-    
-    const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
-
-    const fetchTwitterStatus = useCallback(async () => {
-        try {
-            const response = await fetch('/api/twitter/check', {
-                credentials: 'include',
-            });
-            if (!response.ok) throw new Error('Network response was not ok');
-            const data = await response.json();
-            setTwitterLinked(data.twitterLinked);
-            setTwitterTokenValid(data.twitterTokenValid);
-        } catch (error) {
-            console.error("Failed to fetch Twitter status:", error);
-            setTwitterLinked(false);
-            setTwitterTokenValid(false);
-        }
-    }, []);
-
-    const fetchInstagramStatus = useCallback(async () => {
-        try {
-            const response = await fetch('/api/instagram/check', {
-                credentials: 'include',
-            });
-            if (!response.ok) throw new Error('Network response was not ok');
-            const data = await response.json();
-            setInstagramLinked(data.instagramLinked);
-            setInstagramTokenValid(data.instagramTokenValid);
-        } catch (error) {
-            console.error("Failed to fetch Instagram status:", error);
-            setInstagramLinked(false);
-            setInstagramTokenValid(false);
-        }
-    }, []);
+    const [blueskyLinked, setBlueskyLinked] = useState<boolean | null>(null);
 
     useEffect(() => {
-        const status = searchParams.get('status');
-        const provider = searchParams.get('provider');
+    async function fetchLinkStatus() {
+      try {
+        const response = await fetch('/auth/oauth_status', {
+          credentials: 'include',
+        });
 
-        if (status && provider === 'twitter') {
-            if (status === 'success') {
-                toast.success('Successfully connected your account!');
-                fetchTwitterStatus(); 
-            } else if (status === 'denied') {
-                toast.error('Authorization was denied');
-            } else if (status === 'error') {
-                const code = searchParams.get('code') || 'Unknown error';
-                toast.error(`Failed to connect: ${code}`);
-            }
-            
-            navigate('/profile', { replace: true });
+        if (!response.ok) {
+          throw new Error('Failed to fetch linking status');
         }
-        else {
-            fetchTwitterStatus();
-        }
-    }, [fetchTwitterStatus, navigate, searchParams]);
+        const data = await response.json();
 
-    
+        setTwitterLinked(data.twitter_linked);
+        setInstagramLinked(data.instagram_linked);
+        setBlueskyLinked(data.bluesky_linked);
+      } catch (error) {
+        console.error('Error fetching connect status:', error);
+        toast.error('Error fetching connect status');
+        setTwitterLinked(false);
+        setInstagramLinked(false);
+        setBlueskyLinked(false);
+      }
+    }
 
-    useEffect(() => {
-        fetchInstagramStatus();
-    }, [fetchInstagramStatus]);
-
-
+    fetchLinkStatus();
+  }, []);
 
     return (
         <div className="w-full max-w-4xl mx-auto space-y-8 pt-0 md:pt-12">
@@ -90,12 +52,10 @@ const Profile: React.FC = () => {
                     icon={Twitter}
                     iconBackgroundClass="bg-twitter"
                     isLinked={twitterLinked}
-                    isTokenValid={twitterTokenValid}
                     linkEndpoint="/api/twitter/link/begin"
                     unlinkEndpoint="/api/twitter/unlink"
                     onStatusChange={() => {
                         setTwitterLinked(false);
-                        setTwitterTokenValid(false);
                     }}
                 />
 
@@ -106,14 +66,26 @@ const Profile: React.FC = () => {
                     icon={Instagram}
                     iconBackgroundClass="bg-gradient-to-br from-[var(--color-instagram-from)] via-[var(--color-instagram-via)] to-[var(--color-instagram-to)]"
                     isLinked={instagramLinked}
-                    isTokenValid={instagramTokenValid}
                     linkEndpoint="/api/instagram/link/begin"
                     unlinkEndpoint="/api/instagram/unlink"
                     onStatusChange={() => {
                         setInstagramLinked(false);
-                        setInstagramTokenValid(false);
                     }}
                 />
+
+                {/* Bluesky Card */}
+                <SocialMediaCard
+                    platformName="Bluesky"
+                    platformDescription="Connect your Bluesky account"
+                    icon={Twitter} // Replace with Bluesky icon when available
+                    iconBackgroundClass="bg-blue-500"
+                    isLinked={blueskyLinked}
+                    linkEndpoint="/api/bluesky/link/begin"
+                    unlinkEndpoint="/api/bluesky/unlink"
+                    onStatusChange={() => {
+                        setBlueskyLinked(false);
+                    }}
+                />  
             </div>
         </div>
     );

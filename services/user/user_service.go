@@ -2,26 +2,26 @@ package user
 
 import (
 	"backend/models"
-	repo_user "backend/repositories/user"
 	repo_instagram "backend/repositories/instagram"
 	repo_twitter "backend/repositories/twitter"
+	repo_user "backend/repositories/user"
 	"fmt"
-	"time"
-
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
+	"time"
 )
 
 type UserService interface {
 	CreateUser(user *models.User) error
 	LoginUser(user *models.User) (string, error)
 	GetJWTSecret() []byte
-	IsLoggedIn(c echo.Context) (bool, string, error)
+	IsLoggedIn(c echo.Context) (string, error)
 	SaveTwitterToken(email string, accessToken string, accessSecret string) error
 	GetTwitterToken(email string) (string, string, error)
 	SaveInstagramToken(email string, accessToken string, expiresIn int) error
 	GetInstagramCredentials(email string) (string, string, error)
+	GetOAuthLinkStatus(jwtToken string) (OAuthStatus, error)
 }
 
 type userServiceImpl struct {
@@ -31,12 +31,21 @@ type userServiceImpl struct {
 	jwtSecret      []byte
 }
 
+type OAuthStatus struct {
+	Twitter    bool
+	Instagram  bool
+	Bluesky    bool
+	Mastodon   bool
+	Artstation bool
+	Youtube    bool
+}
+
 func NewUserService(repoUser repo_user.UserRepository, repoInstagram repo_instagram.InstagramRepository, repoTwitter repo_twitter.TwitterRepository, jwtSecret []byte) UserService {
 	return &userServiceImpl{
-		repo_user: repoUser,
+		repo_user:      repoUser,
 		repo_instagram: repoInstagram,
-		repo_twitter: repoTwitter,
-		jwtSecret: []byte(jwtSecret),
+		repo_twitter:   repoTwitter,
+		jwtSecret:      []byte(jwtSecret),
 	}
 }
 
@@ -80,22 +89,33 @@ func (s *userServiceImpl) GetJWTSecret() []byte {
 	return s.jwtSecret
 }
 
-func (s *userServiceImpl) IsLoggedIn(c echo.Context) (bool, string, error) {
-	claims, ok := c.Get("userClaims").(jwt.MapClaims)
+func (s *userServiceImpl) IsLoggedIn(c echo.Context) (string, error) {
+	cookie, err := c.Cookie("jwt_token")
+	if err != nil {
+		return "", err
+	}
+
+	token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, echo.ErrUnauthorized
+		}
+		jwtSecret := s.GetJWTSecret()
+		return jwtSecret, nil
+	})
+	if token == nil || !token.Valid {
+		return "", err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return false, "", fmt.Errorf("Invalid token claims")
+		return "", fmt.Errorf("Could not find claims")
 	}
 
 	email, ok := claims["sub"].(string)
 	if !ok {
-		return false, "", fmt.Errorf("Email (sub) claim not found in token")
+		return "", fmt.Errorf("Could not find email")
 	}
-
-	exists, err := s.repo_user.ExistsByEmail(email)
-	if err != nil || !exists {
-		return false, "", err
-	}
-	return true, email, nil
+	return email, nil
 }
 
 func (s *userServiceImpl) SaveTwitterToken(email, accessToken, accessSecret string) error {
@@ -112,7 +132,7 @@ func (s *userServiceImpl) GetTwitterToken(email string) (string, string, error) 
 	if err != nil {
 		return "", "", err
 	}
-	return s.repo_twitter.GetToken(userID)
+	return s.repo_twitter.GetCredentials(userID)
 }
 
 func (s *userServiceImpl) SaveInstagramToken(email string, accessToken string, expiresIn int) error {
@@ -140,4 +160,40 @@ func (s *userServiceImpl) GetInstagramCredentials(email string) (string, string,
 	}
 
 	return s.repo_instagram.GetCredentials(userID)
+}
+
+func (s *userServiceImpl) GetOAuthLinkStatus(email string) (OAuthStatus, error) {
+	var status OAuthStatus
+
+	userID, err := s.repo_user.UserIDByEmail(email)
+	if err != nil {
+		return status, err
+	}
+
+	status.Twitter = s.checkTwitter(userID)
+	status.Instagram = s.checkInstagram(userID)
+
+	// Placeholders for future platforms
+	status.Bluesky = false
+	status.Mastodon = false
+	status.Artstation = false
+	status.Youtube = false
+
+	return status, nil
+}
+
+func (s *userServiceImpl) checkTwitter(userID string) bool {
+	twitterAT, twitterAS, err := s.repo_twitter.GetCredentials(userID)
+	if err != nil {
+		return false
+	}
+	return s.repo_twitter.CheckTokens(twitterAT, twitterAS) == nil
+}
+
+func (s *userServiceImpl) checkInstagram(userID string) bool {
+	instagramAT, _, err := s.repo_instagram.GetCredentials(userID)
+	if err != nil {
+		return false
+	}
+	return s.repo_instagram.CheckTokens(instagramAT) == nil
 }

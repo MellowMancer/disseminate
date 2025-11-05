@@ -2,15 +2,17 @@ package twitter
 
 import (
 	"backend/models"
+	repo_supabase "backend/repositories/supabase"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"log"
-	"strconv"
 	"mime/multipart"
-	repo_supabase "backend/repositories/supabase"
+	"net/http"
+	"strconv"
+
+	"github.com/dghubble/oauth1"
 )
 
 type v2StatusResponse struct {
@@ -34,8 +36,8 @@ type v2InitResponse struct {
 
 type TwitterRepository interface {
 	SaveToken(userID string, accessToken string, accessSecret string) error
-	GetToken(userID string) (string, string, error)
-	CheckTokens(client *http.Client) (bool, error)
+	GetCredentials(userID string) (string, string, error)
+	CheckTokens(accessToken, accessSecret string) (error)
 	InitUpload(httpClient *http.Client, mediaData []byte, mediaType string, mediaCategory string) (string, error)
 	AppendUpload(httpClient *http.Client, mediaID string, mediaData []byte, segmentIndex int) (int, error)
 	FinalizeUpload(httpClient *http.Client, mediaID string) error
@@ -45,11 +47,13 @@ type TwitterRepository interface {
 
 type twitterRepositoryImpl struct {
 	repo_supabase *repo_supabase.SupabaseRepository
+	twitterConfig *oauth1.Config
 }
 
-func NewTwitterRepository(supabaseRepository *repo_supabase.SupabaseRepository) TwitterRepository {
+func NewTwitterRepository(supabaseRepository *repo_supabase.SupabaseRepository, twitterConfig *oauth1.Config) TwitterRepository {
 	return &twitterRepositoryImpl{
 		repo_supabase: supabaseRepository,
+		twitterConfig: twitterConfig,
 	}
 }
 
@@ -84,7 +88,7 @@ func (t *twitterRepositoryImpl) SaveToken(userID string, accessToken string, acc
     return nil
 }
 
-func (t *twitterRepositoryImpl) GetToken(userID string) (string, string, error) {
+func (t *twitterRepositoryImpl) GetCredentials(userID string) (string, string, error) {
 	req, _ := http.NewRequest("GET", t.repo_supabase.SupabaseURL + "twitter", nil)
 	req.Header.Set("apikey", t.repo_supabase.SupabaseKey)
 	req.Header.Set("Authorization", "Bearer "+t.repo_supabase.SupabaseKey)
@@ -117,20 +121,23 @@ func (t *twitterRepositoryImpl) GetToken(userID string) (string, string, error) 
 	return twitterModel[0].AccessToken, twitterModel[0].AccessSecret, nil
 }
 
-func (t *twitterRepositoryImpl) CheckTokens(client *http.Client) (bool, error) {
+func (t *twitterRepositoryImpl) CheckTokens(accessToken string, accessSecret string) (error) {
+	token := oauth1.NewToken(accessToken, accessSecret)
+	client := t.twitterConfig.Client(oauth1.NoContext, token)
+
 	resp, err := client.Get("https://api.twitter.com/1.1/account/verify_credentials.json")
 	if err != nil {
-		return false, err
+		return err
 	}
 	defer resp.Body.Close()
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		return true, nil
+		return nil
 	case http.StatusUnauthorized:
-		return false, fmt.Errorf("tokens invalid or revoked")
+		return fmt.Errorf("tokens invalid or revoked")
 	default:
-		return false, fmt.Errorf("unexpected response from Twitter API")
+		return fmt.Errorf("unexpected response from Twitter API")
 	}
 }
 

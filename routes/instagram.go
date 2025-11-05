@@ -9,8 +9,6 @@ func RegisterInstagramRoutes(api *echo.Group, h *handlers.InstagramHandler) {
 	twitter := api.Group("/instagram")
 	
 	twitter.GET("/link/begin", h.BeginInstagramLink) // GET /api/instagram/link/begin
-	
-	twitter.GET("/check", h.CheckInstagramToken) // GET /api/instagram/check
 
 	
 }

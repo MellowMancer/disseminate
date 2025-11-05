@@ -12,4 +12,5 @@ func RegisterAuthRoutes(a *echo.Group, h *handlers.Handler, jwtSecret []byte) {
 	a.POST("/signup", h.SignUp, middlewares.RedirectIfAuthenticated(jwtSecret))
 	a.POST("/logout", h.Logout, middlewares.RedirectIfAuthenticated(jwtSecret))
 	a.GET("/status", h.AuthStatus)
+	a.GET("/oauth_status", h.OAuthStatus)
 }
