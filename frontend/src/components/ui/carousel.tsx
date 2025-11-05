@@ -13,6 +13,7 @@ type Dimensions = { width: number; height: number; };
 
 interface CarouselProps extends React.HTMLAttributes<HTMLDivElement> {
     mediaItems: MediaItemType[];
+    onReorder: (newOrder: MediaItemType[]) => void;
     selectedIds: Set<string>;
     onSelectionChange: (id: string) => void;
     onMediaUpdate: (id: string, newSrc: string) => void;
@@ -26,6 +27,7 @@ const transitionDuration = 180; // in ms
 
 const Carousel: React.FC<CarouselProps> = ({
     mediaItems,
+    onReorder,
     selectedIds,
     onSelectionChange,
     onMediaUpdate,
@@ -40,6 +42,27 @@ const Carousel: React.FC<CarouselProps> = ({
     const [dimensions, setDimensions] = useState<(Dimensions | null)[]>(mediaItems.map(() => null));
     const [containerHeight, setContainerHeight] = useState<number>(fixedHeight);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [orderedMedia, setOrderedMedia] = React.useState(mediaItems);
+
+    React.useEffect(() => {
+        setOrderedMedia(mediaItems);
+    }, [mediaItems]);
+
+    const moveItem = (index: number, direction: "up" | "down") => {
+        setOrderedMedia((prev) => {
+            const newArray = [...prev];
+            const targetIndex = direction === "up" ? index - 1 : index + 1;
+            if (targetIndex < 0 || targetIndex >= newArray.length) return newArray;
+
+            [newArray[index], newArray[targetIndex]] = [newArray[targetIndex], newArray[index]];
+
+            // Notify parent about reorder
+            onReorder(newArray);
+
+            return newArray;
+        });
+    };
+
     const border = " bg-card border-border border-1 border-t-24 rounded-md shadow-(--shadow-override) md:shadow-(--shadow-override-md) lg:shadow-(--shadow-override-lg)";
 
     const changeSlide = (newIndex: number) => {
@@ -261,41 +284,43 @@ const Carousel: React.FC<CarouselProps> = ({
                         </DialogHeader>
 
                         <div className="grid grid-cols-4 gap-4 pt-2">
-                            {mediaItems.map((item) => {
-                                const isSelected = selectedIds.has(item.id); // selectedIds passed as prop
-
+                            {orderedMedia.map((item, idx) => {
+                                const isSelected = selectedIds.has(item.id);
                                 return (
-                                    <button
-                                        key={item.id}
-                                        type="button"
-                                        className={`border rounded p-1 flex flex-col items-center justify-center max-h-40 min-h-40 overflow-hidden focus:outline focus:outline-offset-2 focus:outline-primary ${isSelected
-                                                ? "bg-primary text-primary-foreground font-semibold"
-                                                : "border-border bg-transparent text-accent-foreground"
-                                            }`}
-                                        onClick={() => onSelectionChange(item.id)}
-                                        aria-pressed={isSelected}
-                                        aria-label={isSelected ? "Deselect media" : "Select media"}
-                                    >
-                                        <div className="w-full flex items-center justify-center min-h-32">
-                                            {item.type === "image" ? (
-                                                <img
-                                                    src={item.src}
-                                                    alt=""
-                                                    className="max-h-32 object-contain select-none mx-auto"
-                                                    draggable={false}
-                                                />
-                                            ) : (
-                                                <video
-                                                    src={item.src}
-                                                    className="max-h-32 object-contain select-none mx-auto"
-                                                />
-                                            )}
+                                    <div key={item.id} className="relative border rounded flex flex-col items-center justify-center min-h-40 p-1">
+                                        {/* Reorder buttons */}
+                                        <div className="absolute top-1 right-1 flex gap-1">
+                                            <button
+                                                disabled={idx === 0}
+                                                onClick={() => moveItem(idx, "up")}
+                                                className="text-xs p-1 rounded bg-gray-100 disabled:opacity-50"
+                                                aria-label="Move media up"
+                                            >←</button>
+                                            <button
+                                                disabled={idx === orderedMedia.length - 1}
+                                                onClick={() => moveItem(idx, "down")}
+                                                className="text-xs p-1 rounded bg-gray-100 disabled:opacity-50"
+                                                aria-label="Move media down"
+                                            >→</button>
                                         </div>
-                                        <span className="mt-2 text-sm text-center w-full">
-                                            {isSelected ? "Selected" : "Click to select"}
-                                        </span>
-                                    </button>
 
+                                        {/* Rendering the media and selection button etc */}
+                                        <button
+                                            type="button"
+                                            className={`border rounded p-1 flex flex-col items-center max-h-40 overflow-hidden focus:outline focus:outline-offset-2 focus:outline-primary ${isSelected ? "bg-primary text-primary-foreground font-semibold" : "border-border bg-transparent text-accent-foreground"
+                                                }`}
+                                            onClick={() => onSelectionChange(item.id)}
+                                            aria-pressed={isSelected}
+                                            aria-label={isSelected ? "Deselect media" : "Select media"}
+                                        >
+                                            {item.type === "image" ? (
+                                                <img src={item.src} alt="" className="max-h-32 object-contain select-none" draggable={false} />
+                                            ) : (
+                                                <video src={item.src} className="max-h-32 object-contain select-none" />
+                                            )}
+                                            <span className="mt-1 text-sm">{isSelected ? "Selected" : "Click to select"}</span>
+                                        </button>
+                                    </div>
                                 );
                             })}
                         </div>
