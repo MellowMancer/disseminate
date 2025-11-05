@@ -31,12 +31,12 @@ function MediaPreview({
     border,
     overrideLabel,
     playable = false
-}: {
+}: Readonly<{
     item: MediaItemType,
     border: string,
     overrideLabel?: boolean,
     playable?: boolean
-}) {
+}>) {
     return (
         <>
             {item.type === "image" ? (
@@ -109,12 +109,12 @@ const Carousel: React.FC<CarouselProps> = ({
     useEffect(() => {
         setDimensions(mediaItems.map(() => null));
         let isCancelled = false;
-        mediaItems.forEach((item, idx) => {
+        for (const [idx, item] of mediaItems.entries()) {
             const processDimensions = (width: number, height: number) => {
                 if (!isCancelled) setDimensions(prev => { const n = [...prev]; n[idx] = { width, height }; return n; });
             };
             if (item.type === "image") {
-                const img = new window.Image();
+                const img = new globalThis.Image();
                 img.onload = () => processDimensions(img.naturalWidth, img.naturalHeight);
                 img.src = item.src;
             } else {
@@ -122,7 +122,7 @@ const Carousel: React.FC<CarouselProps> = ({
                 video.onloadedmetadata = () => processDimensions(video.videoWidth, video.videoHeight);
                 video.src = item.src;
             }
-        });
+        }
         return () => { isCancelled = true; };
     }, [mediaItems]);
 
@@ -139,8 +139,8 @@ const Carousel: React.FC<CarouselProps> = ({
             if (e.key === "ArrowLeft") prev();
             else if (e.key === "ArrowRight") next();
         };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
+        globalThis.addEventListener("keydown", handleKeyDown);
+        return () => globalThis.removeEventListener("keydown", handleKeyDown);
     }, [currentIndex, orderedMedia.length]);
 
     if (!orderedMedia.length)
@@ -152,7 +152,7 @@ const Carousel: React.FC<CarouselProps> = ({
     const isSelected = selectedIds.has(current.id);
 
     // ---- Shared Selection Button ----
-    function SelectionButton({ itemId, isSelected }: { itemId: string, isSelected: boolean }) {
+    function SelectionButton({ itemId, isSelected }: Readonly<{ itemId: string, isSelected: boolean }>) {
         return (
             <button
                 type="button"
@@ -229,7 +229,7 @@ const Carousel: React.FC<CarouselProps> = ({
                 <Button onClick={prev}>Prev</Button>
                 <Dialog>
                     <DialogTrigger asChild>
-                        <div
+                        <Button
                             className="flex items-center gap-2 text-primary-foreground bg-primary text-sm py-2 px-3 rounded-md cursor-pointer select-none hover:bg-primary/90 focus:ring-2 ring-primary ring-offset-2 transition-all"
                             aria-label="Show all media items"
                             tabIndex={0}
@@ -239,7 +239,7 @@ const Carousel: React.FC<CarouselProps> = ({
                             <span>
                                 {currentIndex + 1} / {orderedMedia.length}
                             </span>
-                        </div>
+                        </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
                         <DialogHeader>
