@@ -1,5 +1,3 @@
-import React from "react";
-
 const DOT_ROWS = 8;            // Number of rows
 const DOT_COLS = 60;            // Number of columns
 const DOT_SIZE = 4;             // px, diameter of each dot

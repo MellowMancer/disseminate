@@ -1,9 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Twitter, Instagram } from 'lucide-react';
 import { SocialMediaCard } from '@/components/ui/social-media-card';
-import { set } from 'react-hook-form';
 
 const Profile: React.FC = () => {
     const [twitterLinked, setTwitterLinked] = useState<boolean | null>(null);
