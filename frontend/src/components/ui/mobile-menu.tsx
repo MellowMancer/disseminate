@@ -41,9 +41,13 @@ export function MobileMenu() {
 
             {/* Overlay */}
             {isOpen && (
-                <div
+                <button
+                    aria-label="Close menu overlay"
                     className="md:hidden fixed inset-0 bg-black/50 z-40"
                     onClick={() => setIsOpen(false)}
+                    onKeyDown={e => {
+                        if (e.key === "Enter" || e.key === " ") setIsOpen(false);
+                    }}
                 />
             )}
 
