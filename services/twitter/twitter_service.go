@@ -19,7 +19,6 @@ import (
 type TwitterService interface {
 	GetAuthorizationURL() (string, string, error)
 	GetAccessToken(oauthToken, requestSecret, oauthVerifier string) (string, string, error)
-	CheckTokensValid(accessToken, accessSecret string) (bool, error)
 	PostTweet(accessToken, accessSecret, content string, files []*multipart.FileHeader) error
 }
 
@@ -55,13 +54,6 @@ func (s *twitterServiceImpl) GetAccessToken(oauthToken, requestSecret, oauthVeri
 		return "", "", err
 	}
 	return accessToken, accessSecret, nil
-}
-
-func (s *twitterServiceImpl) CheckTokensValid(accessToken, accessSecret string) (bool, error) {
-	token := oauth1.NewToken(accessToken, accessSecret)
-	httpClient := s.twitterConfig.Client(oauth1.NoContext, token)
-
-	return s.repo_twitter.CheckTokens(httpClient)
 }
 
 func (s *twitterServiceImpl) uploadMultipleMedia(httpClient *http.Client, files []*multipart.FileHeader) ([]string, error) {

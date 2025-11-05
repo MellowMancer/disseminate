@@ -223,7 +223,7 @@ func main() {
 		log.Fatal("Failed to initialize Cloudflare repository:", err)
 	}
 	userRepository := repo_user.NewUserRepository(supabaseRepository)
-	twitterRepository := repo_twitter.NewTwitterRepository(supabaseRepository)
+	twitterRepository := repo_twitter.NewTwitterRepository(supabaseRepository, twitterConfig)
 	instagramRepository := repo_instagram.NewInstagramRepository(supabaseRepository, cloudflareRepository)
 
 	userService := service_user.NewUserService(userRepository, instagramRepository, twitterRepository, []byte(envConfig.JWTSecret))

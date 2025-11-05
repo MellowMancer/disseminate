@@ -24,6 +24,7 @@ func NewInstagramHandler(instagramService service_instagram.InstagramService, us
 	}
 }
 
+
 func generateState() (string, error) {
 	b := make([]byte, 16) // 16 bytes
 	_, err := rand.Read(b)
@@ -36,12 +37,9 @@ func generateState() (string, error) {
 
 // BeginInstagramLink initiates the Instagram OAuth linking process.
 func (h *InstagramHandler) BeginInstagramLink(c echo.Context) error {
-	ok, email, err := h.userService.IsLoggedIn(c)
+	email, err := h.userService.IsLoggedIn(c)
 	if err != nil {
 		return err
-	}
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not logged in"})
 	}
 
 	sess, err := session.Get("instagram-link-session", c)
@@ -64,31 +62,6 @@ func (h *InstagramHandler) BeginInstagramLink(c echo.Context) error {
 	return nil
 }
 
-// CheckInstagramToken checks the validity of the Instagram token.
-func (h *InstagramHandler) CheckInstagramToken(c echo.Context) error {
-	ok, email, err := h.userService.IsLoggedIn(c)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not logged in"})
-	}
-	
-	accessToken, _, err := h.userService.GetInstagramCredentials(email)
-	log.Println("[CHECK_INSTAGRAM_TOKEN] --- Retrieved access token: ", accessToken, " ---")
-	if err != nil || accessToken == "" {
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"instagramLinked": false,
-			"instagramTokenValid":    false,
-		})
-	}
-
-	err = h.instagramService.CheckTokensValid(accessToken)
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"instagramLinked": true,
-		"instagramTokenValid":  err == nil,
-	})
-}
 
 func (h *InstagramHandler) Callback(c echo.Context) error {
 	const profilePath = "/profile"

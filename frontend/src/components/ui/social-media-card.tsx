@@ -11,7 +11,6 @@ interface SocialMediaCardProps {
   icon: LucideIcon;
   iconBackgroundClass: string;
   isLinked: boolean | null;
-  isTokenValid: boolean | null;
   linkEndpoint: string;
   unlinkEndpoint: string;
   onStatusChange?: () => void;
@@ -23,7 +22,6 @@ export function SocialMediaCard({
   icon: Icon,
   iconBackgroundClass,
   isLinked,
-  isTokenValid,
   linkEndpoint,
   unlinkEndpoint,
   onStatusChange,
@@ -61,19 +59,11 @@ export function SocialMediaCard({
       };
     }
     
-    if (isLinked && isTokenValid) {
+    if (isLinked) {
       return {
         icon: <CheckCircle2 className="h-5 w-5" />,
         text: 'Connected & Active',
         className: 'text-success',
-      };
-    }
-    
-    if (isLinked && !isTokenValid) {
-      return {
-        icon: <AlertCircle className="h-5 w-5" />,
-        text: 'Token Expired',
-        className: 'text-warning',
       };
     }
     
@@ -85,7 +75,7 @@ export function SocialMediaCard({
   };
 
   const status = getStatus();
-  const showDisconnectButton = isLinked && isTokenValid;
+  const showDisconnectButton = isLinked;
   const showConnectButton = !showDisconnectButton;
   const connectButtonText = isLinked ? 'Reauthorize' : 'Connect Account';
 
@@ -150,4 +140,31 @@ export function SocialMediaCard({
     </DynamicShadowWrapper>
   );
 }
+
+
+// Example function to fetch OAuth connection state
+async function getOAuthStatus(platform: string): Promise<{ linked: boolean; tokenExpired: boolean }> {
+  try {
+    const response = await fetch(`/api/oauth/status?platform=${platform}`, {
+      credentials: 'include'
+    });
+    
+    if (!response.ok) throw new Error('Failed to fetch status');
+    
+    const data = await response.json();
+
+    // Assuming response contains { linked: boolean, tokenExpiresAt: timestamp }
+    const now = Date.now();
+    const tokenExpiresAt = new Date(data.tokenExpiresAt).getTime();
+
+    return {
+      linked: data.linked,
+      tokenExpired: tokenExpiresAt < now
+    };
+  } catch (error) {
+    console.error('Error fetching OAuth status:', error);
+    return { linked: false, tokenExpired: false };
+  }
+}
+
 

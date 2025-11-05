@@ -24,12 +24,9 @@ func NewTwitterHandler(twitterService service_twitter.TwitterService, userServic
 
 func (h *TwitterHandler) BeginTwitterLink(c echo.Context) error {
 	// This endpoint MUST be protected by JWTMiddleware.
-	ok, email, err := h.userService.IsLoggedIn(c)
+	email, err := h.userService.IsLoggedIn(c)
 	if err != nil {
 		return err
-	}
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not logged in"})
 	}
 
 	authURL, requestSecret, err := h.twitterService.GetAuthorizationURL()
@@ -124,28 +121,4 @@ func (h *TwitterHandler) Callback(c echo.Context) error {
 	log.Println("[CALLBACK_TRACE] --- Callback handler finished successfully. Redirecting to profile. ---")
 	successRedirectURL := fmt.Sprintf("%s?status=success&provider=twitter", profilePath)
 	return c.Redirect(http.StatusSeeOther, successRedirectURL)
-}
-
-func (h *TwitterHandler) CheckTwitterToken(c echo.Context) error {
-	ok, email, err := h.userService.IsLoggedIn(c)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not logged in"})
-	}
-	
-	accessToken, accessSecret, err := h.userService.GetTwitterToken(email)
-	if err != nil || accessToken == "" || accessSecret == "" {
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"twitterLinked": false,
-			"twitterTokenValid":    false,
-		})
-	}
-
-	valid, err := h.twitterService.CheckTokensValid(accessToken, accessSecret)
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"twitterLinked": true,
-		"twitterTokenValid":    valid && err == nil,
-	})
 }

@@ -22,8 +22,7 @@ type LoginFormValues = {
 export default function LoginPage() {
   const { authenticated: _, setAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const from = (location.state)?.from?.pathname || "/";
+  const from = "/profile";
 
   const form = useForm<LoginFormValues>({
     mode: "onChange",
