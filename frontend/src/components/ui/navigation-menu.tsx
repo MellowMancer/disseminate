@@ -2,7 +2,7 @@ import * as React from "react"
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu"
 import { cva } from "class-variance-authority"
 import { ChevronDownIcon } from "lucide-react"
-import { DynamicShadowWrapper } from "./dynamic-shadow-wrapper"
+import { DynamicShadowWrapper } from "@/components/ui/dynamic-shadow-wrapper"
 import { cn } from "@/lib/utils"
 
 function NavigationMenu({
