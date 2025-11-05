@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2, XCircle, AlertCircle, Loader2, type LucideIcon } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, type LucideIcon } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DynamicShadowWrapper } from '@/components/ui/dynamic-shadow-wrapper';
@@ -140,31 +140,3 @@ export function SocialMediaCard({
     </DynamicShadowWrapper>
   );
 }
-
-
-// Example function to fetch OAuth connection state
-async function getOAuthStatus(platform: string): Promise<{ linked: boolean; tokenExpired: boolean }> {
-  try {
-    const response = await fetch(`/api/oauth/status?platform=${platform}`, {
-      credentials: 'include'
-    });
-    
-    if (!response.ok) throw new Error('Failed to fetch status');
-    
-    const data = await response.json();
-
-    // Assuming response contains { linked: boolean, tokenExpiresAt: timestamp }
-    const now = Date.now();
-    const tokenExpiresAt = new Date(data.tokenExpiresAt).getTime();
-
-    return {
-      linked: data.linked,
-      tokenExpired: tokenExpiresAt < now
-    };
-  } catch (error) {
-    console.error('Error fetching OAuth status:', error);
-    return { linked: false, tokenExpired: false };
-  }
-}
-
-
