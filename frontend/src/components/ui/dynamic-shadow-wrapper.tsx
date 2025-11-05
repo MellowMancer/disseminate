@@ -77,7 +77,7 @@ export function DynamicShadowWrapper({ children, className = '' }: Readonly<Dyna
             ref={ref}
             className={`${className} transition-shadow duration-300 ease-in-out rounded-md`}
             style={{
-                '--shadow': `${shadowOffset.x}px ${shadowOffset.y}px 0px 0px #1A1A1ADB`,
+                '--shadow': `${shadowOffset.x}px ${shadowOffset.y}px 0px 0px #1A1A1AA9`,
                 boxShadow: 'var(--shadow)',
             } as React.CSSProperties}
         >

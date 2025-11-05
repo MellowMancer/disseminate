@@ -64,9 +64,9 @@
     --radius: 0.5rem;
 
     /* Custom shadow overrides */
-    --shadow-override-lg: 24px 24px 0px 0px #282055;
-    --shadow-override-md: 16px 16px 0px 0px #282055;
-    --shadow-override: 9px 9px 0px 0px #282055;
+    --shadow-override-lg: 24px 24px 0px 0px #1A1A1AA9;
+    --shadow-override-md: 16px 16px 0px 0px #1A1A1AA9;
+    --shadow-override: 9px 9px 0px 0px #1A1A1AA9;
 
     /* Font family */
     --firas: "Fira Sans", sans-serif;
@@ -117,9 +117,9 @@
     --color-ring: #9d4edd;
 
     /* Custom shadow overrides */
-    --shadow-override-lg: 24px 24px 0px 0px #e0aaff;
-    --shadow-override-md: 16px 16px 0px 0px #e0aaff;
-    --shadow-override: 9px 9px 0px 0px #e0aaff;
+    --shadow-override-lg: 24px 24px 0px 0px #1A1A1AA9;
+    --shadow-override-md: 16px 16px 0px 0px #1A1A1AA9;
+    --shadow-override: 9px 9px 0px 0px #1A1A1AA9;
 }
 
 /* Dark Theme - Dark Grays with Purple Accent */
@@ -165,7 +165,7 @@
 
     --color-ring: #c77dff;
 
-    --shadow-override-lg: 24px 24px 0px 0px #1a1a1a;
-    --shadow-override-md: 16px 16px 0px 0px #1a1a1a;
-    --shadow-override: 9px 9px 0px 0px #1a1a1a;
+    --shadow-override-lg: 24px 24px 0px 0px #1A1A1AA9;
+    --shadow-override-md: 16px 16px 0px 0px #1A1A1AA9;
+    --shadow-override: 9px 9px 0px 0px #1A1A1AA9;
 }

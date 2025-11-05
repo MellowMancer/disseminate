@@ -12,6 +12,7 @@ import Carousel from "@/components/ui/carousel";
 import type { FormDataState } from '@/types/forms';
 import { TwitterTab } from '@/pages/schedule/TwitterTab';
 import { YouTubeTab } from '@/pages/schedule/YoutubeTab';
+import { InstagramTab } from './schedule/InstagramTab';
 
 type TabKey = 'twitter' | 'youtube' | 'instagram' | 'reddit' | 'mastodon' | 'artstation';
 
@@ -196,9 +197,9 @@ export function SchedulerPage() {
       await axios.post('/api/create', submissionData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      toast.success('Post scheduled successfully!');
+      toast.success('Posted successfully!');
     } catch (error) {
-      toast.error('Failed to schedule post.');
+      toast.error('Failed to create post.');
       console.error('Submission Error:', error);
     } finally {
       setIsSubmitting(false);
@@ -258,12 +259,24 @@ export function SchedulerPage() {
                   </TabsContent>
 
                   <TabsContent value="youtube">
-                    <YouTubeTab data={formData.youtube} handleChange={handleChange} />
+                    <div className="mt-4">Youtube Posting coming soon!</div>
+                  </TabsContent>
+                  <TabsContent value="instagram">
+                    <InstagramTab data={formData.instagram} handleChange={handleChange} />
+                  </TabsContent>
+                  <TabsContent value="reddit">
+                    <div className="mt-4">Reddit Posting coming soon!</div>
+                  </TabsContent>
+                  <TabsContent value="mastodon">
+                    <div className="mt-4">Mastodon Posting coming soon!</div>
+                  </TabsContent>
+                  <TabsContent value="artstation">
+                    <div className="mt-4">Artstation Posting coming soon!</div>
                   </TabsContent>
                 </Tabs>
                 <CardFooter className="mt-8 p-0">
                   <Button type="submit" className="w-full bg-primary text-primary-foreground" disabled={isSubmitting}>
-                    {isSubmitting ? 'Scheduling...' : `Schedule for ${activeTab}`}
+                    {isSubmitting ? 'Posting...' : `Post for ${activeTab}`}
                   </Button>
                 </CardFooter>
               </form>

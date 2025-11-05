@@ -2,3 +2,30 @@ body{
     font-family: var(--firas);
     overflow: hidden;
 }
+
+.dot-matrix-dot {
+  position: absolute;
+  border-radius: 9999px;
+  background: #98a4fa;
+  opacity: 0.6;
+  pointer-events: none;
+  animation: dotRiseFadeScale 5s linear infinite;
+  will-change: opacity, transform;
+  transform-origin: center bottom;
+}
+
+@keyframes dotRiseFadeScale {
+  0% {
+    opacity: 0.6;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: translateY(-25px) scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.5);
+  }
+}
+
