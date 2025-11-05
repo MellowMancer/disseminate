@@ -27,9 +27,9 @@ const initialFormData: FormDataState = {
   twitter: { content: '' },
   youtube: { title: '', description: '', tags: '' },
   instagram: { caption: '' },
-  reddit: {  },
-  mastodon: {  },
-  artstation: {  },
+  reddit: {},
+  mastodon: {},
+  artstation: {},
 };
 
 const createInitialSelectedMedia = (): Record<TabKey, Set<string>> => ({
@@ -71,7 +71,7 @@ export function SchedulerPage() {
 
     const items: MediaItemType[] = [];
     const map = new Map<string, File>();
-    for(const file of Array.from(files)){
+    for (const file of Array.from(files)) {
       const id = `${file.name}-${file.lastModified}-${file.size}`;
       items.push({
         id,
@@ -86,7 +86,7 @@ export function SchedulerPage() {
     setIsReady(true);
 
     return () => {
-      for(const item of items){URL.revokeObjectURL(item.src)}
+      for (const item of items) { URL.revokeObjectURL(item.src) }
     };
   }, [location.state?.files]);
 
@@ -176,7 +176,7 @@ export function SchedulerPage() {
     // 5. Append only the selected files
     const overridesForTab = mediaOverrides[activeTab] || {};
 
-    for(const id of selectedIds) {
+    for (const id of selectedIds) {
       let fileToSubmit: File | undefined;
 
       // Check if there is an override for this platform
@@ -205,6 +205,18 @@ export function SchedulerPage() {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    if (originalMediaItems.length === 0) return;
+
+    setSelectedMedia(prev => {
+      // Copy previous to keep selections for other tabs
+      const newSelected = { ...prev };
+      // Select all media IDs on active tab
+      newSelected[activeTab] = new Set(originalMediaItems.map(item => item.id));
+      return newSelected;
+    });
+  }, [originalMediaItems, activeTab]);
 
   if (!isReady) {
     return (

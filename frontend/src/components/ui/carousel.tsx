@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogTrigger, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImageCropDialog } from "@/pages/schedule/edit_image/ImageCropDialog";
 
-// Keep this type definition consistent
 export type MediaItemType = {
     id: string;
     type: "image" | "video";
@@ -12,15 +11,14 @@ export type MediaItemType = {
 
 type Dimensions = { width: number; height: number; };
 
-// --- ADD NEW PROPS to the interface ---
 interface CarouselProps extends React.HTMLAttributes<HTMLDivElement> {
     mediaItems: MediaItemType[];
-    selectedIds: Set<string>;                  // <-- NEW: Receives the set of selected IDs
-    onSelectionChange: (id: string) => void;   // <-- NEW: Callback for selection changes
-    onMediaUpdate: (id: string, newSrc: string) => void; // <-- NEW: Callback for when an image is cropped
+    selectedIds: Set<string>;
+    onSelectionChange: (id: string) => void;
+    onMediaUpdate: (id: string, newSrc: string) => void;
     fixedHeight?: number;
     maxWidthThreshold?: number;
-    overriddenIds: string[]; // <-- NEW: An array of IDs that have been edited for this tab
+    overriddenIds: string[];
     onRevert: (id: string) => void;
 };
 
@@ -44,9 +42,8 @@ const Carousel: React.FC<CarouselProps> = ({
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const border = " bg-card border-border border-1 border-t-24 rounded-md shadow-(--shadow-override) md:shadow-(--shadow-override-md) lg:shadow-(--shadow-override-lg)";
 
-    // Transition wrapping for slide changes
     const changeSlide = (newIndex: number) => {
-        if (transitioning) return; // Avoid triggering multiple times during transition
+        if (transitioning) return;
         setTransitioning(true);
         setTimeout(() => {
             setCurrentIndex(newIndex);
@@ -64,7 +61,6 @@ const Carousel: React.FC<CarouselProps> = ({
         changeSlide(newIndex);
     };
 
-    // Preload media intrinsic sizes
     useEffect(() => {
         setDimensions(mediaItems.map(() => null));
         let isCancelled = false;
@@ -73,7 +69,6 @@ const Carousel: React.FC<CarouselProps> = ({
             const processDimensions = (width: number, height: number) => {
                 if (!isCancelled) {
                     setDimensions(prevDims => {
-                        // Use a callback to prevent stale state issues
                         const newDims = [...prevDims];
                         newDims[idx] = { width, height };
                         return newDims;
@@ -90,23 +85,20 @@ const Carousel: React.FC<CarouselProps> = ({
                 video.onloadedmetadata = () => processDimensions(video.videoWidth, video.videoHeight);
                 video.src = item.src;
             }
-        };
+        }
 
         return () => {
-            isCancelled = true; // Cleanup function
+            isCancelled = true;
         };
     }, [mediaItems]);
 
-    // Calculate scaling and adjust container height if needed
     useEffect(() => {
         const validDims = dimensions.filter((d): d is Dimensions => d !== null);
 
-        // If not all dimensions have been loaded yet, do nothing.
         if (validDims.length !== mediaItems.length || mediaItems.length === 0) {
             return;
         }
 
-        // Now, we can safely work with validDims
         const widthsAtFixedHeight = validDims.map((d) => (d.width / d.height) * fixedHeight);
         const maxWidth = Math.max(...widthsAtFixedHeight);
 
@@ -117,10 +109,8 @@ const Carousel: React.FC<CarouselProps> = ({
         } else {
             setContainerHeight(fixedHeight);
         }
-        // This hook now correctly depends on all its inputs
     }, [dimensions, fixedHeight, maxWidthThreshold, mediaItems.length]);
 
-    // Keyboard arrow key navigation with transition
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "ArrowLeft") prev();
@@ -130,7 +120,6 @@ const Carousel: React.FC<CarouselProps> = ({
         return () => globalThis.removeEventListener("keydown", handleKeyDown);
     }, [currentIndex, mediaItems.length]);
 
-
     if (!mediaItems || mediaItems.length === 0) {
         return <div className="text-center text-gray-500">No media available</div>;
     }
@@ -138,10 +127,9 @@ const Carousel: React.FC<CarouselProps> = ({
     const handleCropComplete = (croppedSrc: string) => {
         if (editingIndex === null) return;
         const editedItem = mediaItems[editingIndex];
-        onMediaUpdate(editedItem.id, croppedSrc); // Lift the state up to the parent
-        setEditingIndex(null); // close dialog
+        onMediaUpdate(editedItem.id, croppedSrc);
+        setEditingIndex(null);
     };
-
 
     return (
         <div className={className + " duration-500 ease-in-out"}>
@@ -151,11 +139,11 @@ const Carousel: React.FC<CarouselProps> = ({
             >
                 {mediaItems.map((item, idx) => {
                     const isSelected = selectedIds.has(item.id);
-                    const isOverridden = overriddenIds.includes(item.id); // Check if the item is selected
+                    const isOverridden = overriddenIds.includes(item.id);
                     return (
                         <div
                             key={item.id}
-                            className="flex justify-center items-center h-full w-full"
+                            className="flex justify-center items-center h-full w-full relative group"
                             style={{
                                 transition: `opacity ${transitionDuration}ms ease`,
                                 opacity: idx === currentIndex && !transitioning ? 1 : 0,
@@ -163,11 +151,27 @@ const Carousel: React.FC<CarouselProps> = ({
                                 pointerEvents: idx === currentIndex ? "auto" : "none",
                             }}
                         >
-                            {/* WRAPPER for selection click and overlay */}
+                            {item.type === "image" ? (
+                                <img
+                                    src={item.src}
+                                    alt=""
+                                    className={"h-full w-full object-contain mx-auto pointer-events-none" + border}
+                                    draggable={false}
+                                />
+                            ) : (
+                                <video
+                                    src={item.src}
+                                    className={"h-full w-full object-contain mx-auto" + border}
+                                    controls
+                                />
+                            )}
+
+                            {/* SELECTION CHECKBOX BUTTON */}
                             <button
                                 type="button"
-                                className="relative w-full h-full cursor-pointer group"
-                                onClick={() => onSelectionChange(item.id)} // Make the whole item selectable
+                                className={`absolute top-2 right-2 z-10 w-6 h-6 rounded-full border-2 border-white bg-black bg-opacity-50 flex items-center justify-center transition-all ${isSelected ? 'bg-blue-500 border-blue-500' : 'hover:bg-opacity-70'
+                                    }`}
+                                onClick={() => onSelectionChange(item.id)}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter" || e.key === " ") {
                                         e.preventDefault();
@@ -175,79 +179,59 @@ const Carousel: React.FC<CarouselProps> = ({
                                     }
                                 }}
                                 aria-pressed={isSelected}
-                                tabIndex={0}
-                                style={{ background: "none", border: "none", padding: 0 }}
+                                aria-label={isSelected ? "Deselect item" : "Select item"}
                             >
-                                {isOverridden && (
-                                    <div className="absolute top-8 left-2 bg- text-white text-xs font-bold px-2 py-1 rounded-full">
-                                        Edited
-                                    </div>
-                                )}
-                                {item.type === "image" ? (
-                                    <img
-                                        src={item.src}
-                                        alt=""
-                                        className={"h-full w-full object-contain mx-auto pointer-events-none" + border}
-                                        draggable={false}
-                                    />
-                                ) : (
-                                    <video
-                                        src={item.src}
-                                        className={"h-full w-full object-contain mx-auto pointer-events-none" + border}
-                                    />
-                                )}
-
-                                {/* SELECTION CHECKBOX OVERLAY */}
-                                <div
-                                    className={`absolute top-7 right-3 w-6 h-6 rounded-full border-2 border-white bg-black bg-opacity-50 flex items-center justify-center transition-all ${isSelected ? 'bg-blue-500 border-blue-500' : 'group-hover:bg-opacity-70'
-                                        }`}
-                                >
-                                    {isSelected && (
-                                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    )}
-                                </div>
-
-                                {item.type === "image" && (
-                                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Dialog onOpenChange={(open) => !open && setEditingIndex(null)}>
-                                            <DialogTrigger asChild>
-                                                <Button
-                                                    variant="secondary"
-                                                    size="sm"
-                                                    onClick={(e) => { e.stopPropagation(); setEditingIndex(idx); }}
-                                                >
-                                                    Edit
-                                                </Button>
-                                            </DialogTrigger>
-                                            {editingIndex === idx && (
-                                                <DialogContent>
-                                                    <DialogHeader>
-                                                        <DialogTitle>Edit Image</DialogTitle>
-                                                        <DialogDescription>Crop, rotate, or adjust your image.</DialogDescription>
-                                                    </DialogHeader>
-                                                    <ImageCropDialog
-                                                        src={item.src}
-                                                        onClose={() => setEditingIndex(null)}
-                                                        onCropComplete={handleCropComplete}
-                                                    />
-                                                </DialogContent>
-                                            )}
-                                        </Dialog>
-
-                                        {isOverridden && (
-                                            <Button
-                                                variant="destructive"
-                                                size="sm"
-                                                onClick={(e) => { e.stopPropagation(); onRevert(item.id); }}
-                                            >
-                                                Revert
-                                            </Button>
-                                        )}
-                                    </div>
+                                {isSelected && (
+                                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                    </svg>
                                 )}
                             </button>
+
+                            {isOverridden && (
+                                <div className="absolute top-8 left-2 bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">
+                                    Edited
+                                </div>
+                            )}
+
+                            {item.type === "image" && (
+                                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                                    <Dialog onOpenChange={(open) => !open && setEditingIndex(null)}>
+                                        <DialogTrigger asChild>
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={(e) => { e.stopPropagation(); setEditingIndex(idx); }}
+                                            >
+                                                Edit
+                                            </Button>
+                                        </DialogTrigger>
+                                        {editingIndex === idx && (
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Edit Image</DialogTitle>
+                                                    <DialogDescription>Crop, rotate, or adjust your image.</DialogDescription>
+                                                </DialogHeader>
+                                                <ImageCropDialog
+                                                    src={item.src}
+                                                    onClose={() => setEditingIndex(null)}
+                                                    onCropComplete={handleCropComplete}
+                                                />
+                                            </DialogContent>
+                                        )}
+                                    </Dialog>
+
+                                    {isOverridden && (
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            onClick={(e) => { e.stopPropagation(); onRevert(item.id); }}
+                                        >
+                                            Revert
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     );
                 })}
@@ -258,12 +242,66 @@ const Carousel: React.FC<CarouselProps> = ({
                     <Button onClick={prev}>Prev</Button>
                     <Button onClick={next}>Next</Button>
                 </div>
-                <div className="text-primary-foreground bg-primary text-sm py-2 px-3 rounded-md absolute right-0">
-                    {currentIndex + 1} / {mediaItems.length}
-                </div>
-            </div>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <div
+                            className="text-primary-foreground bg-primary text-sm py-2 px-3 rounded-md absolute right-0 cursor-pointer select-none"
+                            aria-label="Show all media items"
+                        >
+                            {currentIndex + 1} / {mediaItems.length}
+                        </div>
+                    </DialogTrigger>
 
+                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
+                        <DialogHeader>
+                            <DialogTitle>All Media Items</DialogTitle>
+                            <DialogDescription>
+                                A preview of all your media files uploaded.
+                            </DialogDescription>
+                        </DialogHeader>
 
+                        <div className="grid grid-cols-4 gap-4 pt-2">
+                            {mediaItems.map((item) => {
+                                const isSelected = selectedIds.has(item.id); // selectedIds passed as prop
+
+                                return (
+                                    <button
+                                        key={item.id}
+                                        type="button"
+                                        className={`border rounded p-1 flex flex-col items-center justify-center max-h-40 min-h-40 overflow-hidden focus:outline focus:outline-offset-2 focus:outline-primary ${isSelected
+                                                ? "bg-primary text-primary-foreground font-semibold"
+                                                : "border-border bg-transparent text-accent-foreground"
+                                            }`}
+                                        onClick={() => onSelectionChange(item.id)}
+                                        aria-pressed={isSelected}
+                                        aria-label={isSelected ? "Deselect media" : "Select media"}
+                                    >
+                                        <div className="w-full flex items-center justify-center min-h-32">
+                                            {item.type === "image" ? (
+                                                <img
+                                                    src={item.src}
+                                                    alt=""
+                                                    className="max-h-32 object-contain select-none mx-auto"
+                                                    draggable={false}
+                                                />
+                                            ) : (
+                                                <video
+                                                    src={item.src}
+                                                    className="max-h-32 object-contain select-none mx-auto"
+                                                />
+                                            )}
+                                        </div>
+                                        <span className="mt-2 text-sm text-center w-full">
+                                            {isSelected ? "Selected" : "Click to select"}
+                                        </span>
+                                    </button>
+
+                                );
+                            })}
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            </div >
         </div >
     );
 };
