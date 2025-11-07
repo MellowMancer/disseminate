@@ -3,7 +3,7 @@ FROM node:lts-alpine AS build-frontend
 WORKDIR /app/frontend
 
 COPY ./frontend/package.json ./frontend/yarn.lock ./
-RUN corepack enable && yarn install --immutable --ignore-scripts
+RUN corepack enable && yarn install --immutable
 
 COPY ./frontend/ ./
 
