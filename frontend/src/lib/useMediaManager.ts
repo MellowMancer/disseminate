@@ -169,7 +169,6 @@ export function useMediaManager(files: FileList | undefined, activeTab: TabKey) 
             toast.success('Posted successfully!');
         } catch (error) {
             toast.error('Failed to create post.');
-            console.error('Submission Error:', error);
         } finally {
             setIsSubmitting(false);
         }

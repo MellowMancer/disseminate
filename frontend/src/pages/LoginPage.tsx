@@ -13,6 +13,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { DynamicShadowWrapper } from "@/components/ui/dynamic-shadow-wrapper";
+import { toast } from "sonner";
 
 type LoginFormValues = {
   email: string;
@@ -29,7 +30,6 @@ export default function LoginPage() {
   });
 
   const onSubmit: SubmitHandler<LoginFormValues> = async (data) => {
-    console.log("Submitting login form with data:", data);
     try {
       const response = await fetch('/auth/login', {
         method: 'POST',
@@ -46,7 +46,7 @@ export default function LoginPage() {
         navigate(from, { replace: true });
       } else {
         const errData = await response.json();
-        alert(`Login failed: ${errData.message}`);
+        toast(`Login failed: ${errData.message}`);
       }
     } catch (error) {
       alert("Login error: " + error);
