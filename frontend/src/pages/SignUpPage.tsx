@@ -26,7 +26,6 @@ export default function SignUpPage() {
     });
 
     const onSubmit: SubmitHandler<SignUpFormValues> = async (data) => {
-        console.log("Submitting form with data:", data);
         try {
             const response = await fetch('/auth/signup', {
                 method: 'POST',

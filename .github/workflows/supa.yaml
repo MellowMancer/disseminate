@@ -39,9 +39,9 @@ jobs:
 
               if (error) throw error;
 
-              console.log('Ping successful:', data);
+              # console.log('Ping successful:', data);
             } catch (err) {
-              console.error('Error pinging Supabase:', err.message);
+              # console.error('Error pinging Supabase:', err.message);
               process.exit(1);
             }
           })();

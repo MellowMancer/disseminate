@@ -24,7 +24,6 @@ const Profile: React.FC = () => {
         setInstagramLinked(data.instagram_linked);
         setBlueskyLinked(data.bluesky_linked);
       } catch (error) {
-        console.error('Error fetching connect status:', error);
         toast.error('Error fetching connect status');
         setTwitterLinked(false);
         setInstagramLinked(false);

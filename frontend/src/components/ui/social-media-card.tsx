@@ -44,7 +44,6 @@ export function SocialMediaCard({
       onStatusChange?.();
     } catch (error) {
       toast.error(`Failed to disconnect ${platformName} account`);
-      console.error(error);
     } finally {
       setIsUnlinking(false);
     }
