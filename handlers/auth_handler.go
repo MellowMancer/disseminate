@@ -3,8 +3,10 @@ package handlers
 import (
 	"backend/models"
 	service_user "backend/services/user"
+	"backend/utils"
 	"log"
 	"net/http"
+	"unicode"
 
 	emailverifier "github.com/AfterShip/email-verifier"
 	"github.com/golang-jwt/jwt/v5"
@@ -23,6 +25,39 @@ func NewHandler(userService service_user.UserService, isProduction bool) *Handle
 		UserService:  userService,
 		IsProduction: isProduction,
 	}
+}
+
+// validatePassword checks password strength requirements
+func validatePassword(password string) error {
+	if len(password) < 8 {
+		return utils.ErrWeakPassword
+	}
+
+	var (
+		hasUpper   bool
+		hasLower   bool
+		hasNumber  bool
+		hasSpecial bool
+	)
+
+	for _, char := range password {
+		switch {
+		case unicode.IsUpper(char):
+			hasUpper = true
+		case unicode.IsLower(char):
+			hasLower = true
+		case unicode.IsNumber(char):
+			hasNumber = true
+		case unicode.IsPunct(char) || unicode.IsSymbol(char):
+			hasSpecial = true
+		}
+	}
+
+	if !hasUpper || !hasLower || !hasNumber || !hasSpecial {
+		return utils.ErrWeakPassword
+	}
+
+	return nil
 }
 
 func (h *Handler) SignUp(c echo.Context) error {
