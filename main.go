@@ -227,7 +227,8 @@ func main() {
 	instagramRepository := repo_instagram.NewInstagramRepository(supabaseRepository, cloudflareRepository)
 
 	userService := service_user.NewUserService(userRepository, instagramRepository, twitterRepository, []byte(envConfig.JWTSecret))
-	userHandler := handlers.NewHandler(userService)
+	isProduction := envConfig.AppEnv == "production"
+	userHandler := handlers.NewHandler(userService, isProduction)
 
 	twitterService := service_twitter.NewTwitterService(twitterRepository, twitterConfig)
 	twitterHandler := handlers.NewTwitterHandler(twitterService, userService)

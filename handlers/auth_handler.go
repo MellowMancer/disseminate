@@ -14,11 +14,15 @@ import (
 )
 
 type Handler struct {
-	UserService service_user.UserService
+	UserService      service_user.UserService
+	IsProduction     bool
 }
 
-func NewHandler(userService service_user.UserService) *Handler {
-	return &Handler{UserService: userService}
+func NewHandler(userService service_user.UserService, isProduction bool) *Handler {
+	return &Handler{
+		UserService:  userService,
+		IsProduction: isProduction,
+	}
 }
 
 func (h *Handler) SignUp(c echo.Context) error {
@@ -67,9 +71,9 @@ func (h *Handler) Login(c echo.Context) error {
 	cookie.Value = tokenString
 	cookie.Path = "/"
 	cookie.HttpOnly = true
-	cookie.Secure = false // ONLY FOR NOW, REMEMBER TO TURN THIS ON FOR DEPLOYMENT
+	cookie.Secure = h.IsProduction // Secure in production, allow HTTP in development
 	cookie.SameSite = http.SameSiteStrictMode
-	cookie.MaxAge = 86400 * 3
+	cookie.MaxAge = 86400 // Reduced from 3 days to 1 day
 
 	c.SetCookie(cookie)
 
@@ -80,10 +84,10 @@ func (h *Handler) Logout(c echo.Context) error {
 	jwtCookie := &http.Cookie{
 		Name:     "jwt_token",
 		Value:    "",
-		Path:     "/", // Same path as the original cookie
+		Path:     "/",
 		HttpOnly: true,
-		MaxAge:   -1,    // MaxAge < 0 deletes the cookie
-		Secure:   false, // Set true in production if using HTTPS
+		MaxAge:   -1, // MaxAge < 0 deletes the cookie
+		Secure:   h.IsProduction,
 		SameSite: http.SameSiteStrictMode,
 	}
 	c.SetCookie(jwtCookie)
