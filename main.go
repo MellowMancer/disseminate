@@ -54,6 +54,7 @@ type EnvConfig struct {
 	JWTSecret     string
 	SessionSecret string
 	AppEnv        string
+	FrontendURL   string
 }
 
 //go:embed all:frontend/dist
@@ -88,6 +89,16 @@ func loadEnv() EnvConfig {
 	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
 	appEnv := os.Getenv("APP_ENV")
 
+	// Frontend URL for OAuth redirects (defaults to http://localhost:8080 in dev)
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		if appEnv == "production" {
+			frontendURL = "https://yourdomain.com" // Should be set in production
+		} else {
+			frontendURL = "http://localhost:8080"
+		}
+	}
+
 	envConfig := EnvConfig{
 		TwitterConsumerKey:    twitterConsumerKey,
 		TwitterConsumerSecret: twitterConsumerSecret,
@@ -109,6 +120,7 @@ func loadEnv() EnvConfig {
 		JWTSecret:     string(jwtSecret),
 		SessionSecret: sessionSecret,
 		AppEnv:        appEnv,
+		FrontendURL:   frontendURL,
 	}
 
 	return envConfig
@@ -231,10 +243,10 @@ func main() {
 	userHandler := handlers.NewHandler(userService, isProduction)
 
 	twitterService := service_twitter.NewTwitterService(twitterRepository, twitterConfig)
-	twitterHandler := handlers.NewTwitterHandler(twitterService, userService)
+	twitterHandler := handlers.NewTwitterHandler(twitterService, userService, envConfig.FrontendURL)
 
 	instagramService := service_instagram.NewInstagramService(instagramConfig, instagramRepository)
-	instagramHandler := handlers.NewInstagramHandler(instagramService, userService)
+	instagramHandler := handlers.NewInstagramHandler(instagramService, userService, envConfig.FrontendURL)
 
 	platformHandler := handlers.NewPlatformHandler(twitterService, instagramService, userService)
 

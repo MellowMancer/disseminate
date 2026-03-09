@@ -92,6 +92,7 @@ SESSION_SECRET=
 
 # App Environment
 APP_ENV=development
+FRONTEND_URL=http://localhost:8080
 ```
 
 ### Running Locally
