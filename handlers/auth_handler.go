@@ -4,7 +4,6 @@ import (
 	"backend/models"
 	service_user "backend/services/user"
 	"backend/utils"
-	"log"
 	"net/http"
 	"unicode"
 
@@ -63,42 +62,65 @@ func validatePassword(password string) error {
 func (h *Handler) SignUp(c echo.Context) error {
 	var req models.User
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid input"})
+		return utils.BadRequestResponse(c, "Invalid input format")
 	}
 
+	// Validate email
 	verifier := emailverifier.NewVerifier()
 	ret, err := verifier.Verify(req.Email)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid email address"})
-	}
-	if !ret.Syntax.Valid {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid email address"})
+	if err != nil || !ret.Syntax.Valid {
+		return utils.ErrorResponse(c, utils.WrapError(
+			utils.ErrInvalidEmail,
+			"Invalid email address",
+			http.StatusBadRequest,
+		))
 	}
 
+	// Validate password strength
+	if err := validatePassword(req.Password); err != nil {
+		return utils.ErrorResponse(c, utils.WrapError(
+			err,
+			"Password must be at least 8 characters and contain uppercase, lowercase, number, and special character",
+			http.StatusBadRequest,
+		))
+	}
+
+	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Error hashing password"})
+		return utils.InternalErrorResponse(c, err, "password hashing")
 	}
 	req.Password = string(hashedPassword)
 
+	// Create user
 	if err := h.UserService.CreateUser(&req); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return utils.ErrorResponse(c, utils.NewAppError(
+			utils.ErrDatabaseOperation,
+			"Failed to create user account",
+			http.StatusInternalServerError,
+			err.Error(),
+		))
 	}
 
-	return c.JSON(http.StatusCreated, map[string]string{"message": "User created"})
+	return utils.SuccessResponse(c, http.StatusCreated, "User created successfully", map[string]string{
+		"email": req.Email,
+	})
 }
 
 func (h *Handler) Login(c echo.Context) error {
 	var req models.User
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, "Invalid input")
+		return utils.BadRequestResponse(c, "Invalid input format")
 	}
 
 	tokenString, err := h.UserService.LoginUser(&req)
 	if err != nil {
-		log.Printf("Login failed for email '%s': %v", req.Email, err)
-
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Invalid email or password"})
+		return utils.ErrorResponse(c, utils.NewAppError(
+			utils.ErrInvalidCredentials,
+			"Invalid email or password",
+			http.StatusUnauthorized,
+			err.Error(),
+		))
 	}
 
 	cookie := new(http.Cookie)
@@ -112,7 +134,7 @@ func (h *Handler) Login(c echo.Context) error {
 
 	c.SetCookie(cookie)
 
-	return c.JSON(http.StatusOK, "Successfully logged in")
+	return utils.SuccessResponse(c, http.StatusOK, "Login successful", nil)
 }
 
 func (h *Handler) Logout(c echo.Context) error {
@@ -170,24 +192,29 @@ func (h *Handler) AuthStatus(c echo.Context) error {
 }
 
 func (h *Handler) OAuthStatus(c echo.Context) error {
-    email, err := h.UserService.IsLoggedIn(c)
-    if err != nil {
-        return c.JSON(http.StatusUnauthorized, map[string]any{"error": "Invalid token"})
-    }
+	email, err := h.UserService.IsLoggedIn(c)
+	if err != nil {
+		return utils.UnauthorizedResponse(c, "Authentication required")
+	}
 
-    status, err := h.UserService.GetOAuthLinkStatus(email)
-    if err != nil {
-        return c.JSON(http.StatusInternalServerError, map[string]any{"error": "Failed to get OAuth status"})
-    }
+	status, err := h.UserService.GetOAuthLinkStatus(email)
+	if err != nil {
+		return utils.ErrorResponse(c, utils.NewAppError(
+			utils.ErrDatabaseOperation,
+			"Failed to retrieve OAuth link status",
+			http.StatusInternalServerError,
+			err.Error(),
+		))
+	}
 
-    return c.JSON(http.StatusOK, map[string]any{
-        "twitter_linked":    status.Twitter,
-        "instagram_linked":  status.Instagram,
-        "bluesky_linked":    status.Bluesky,
-        "mastodon_linked":   status.Mastodon,
-        "artstation_linked": status.Artstation,
-        "youtube_linked":    status.Youtube,
-    })
+	return utils.SuccessResponse(c, http.StatusOK, "", map[string]any{
+		"twitter_linked":    status.Twitter,
+		"instagram_linked":  status.Instagram,
+		"bluesky_linked":    status.Bluesky,
+		"mastodon_linked":   status.Mastodon,
+		"artstation_linked": status.Artstation,
+		"youtube_linked":    status.Youtube,
+	})
 }
 
 	
