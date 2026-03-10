@@ -37,11 +37,12 @@ A multi-platform social media management tool that allows you to post content to
 ```
 disseminate/
 ├── handlers/         # HTTP handlers
-├── services/         # Business logic
-├── repositories/     # Data access layer
 ├── models/           # Data models
 ├── middlewares/      # HTTP middlewares
+├── repositories/     # Data access layer
 ├── routes/           # Route definitions
+├── services/         # Business logic
+├── utils/            # Helper commands
 ├── frontend/         # React frontend
 │   └── src/
 │       ├── components/   # React components
