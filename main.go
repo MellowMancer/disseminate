@@ -24,6 +24,7 @@ import (
 	service_instagram "backend/services/instagram"
 	service_twitter "backend/services/twitter"
 	service_user "backend/services/user"
+	"backend/utils"
 
 	"github.com/dghubble/oauth1"
 	"github.com/gorilla/sessions"
@@ -53,6 +54,7 @@ type EnvConfig struct {
 
 	JWTSecret     string
 	SessionSecret string
+	EncryptionKey string
 	AppEnv        string
 	FrontendURL   string
 }
@@ -87,7 +89,13 @@ func loadEnv() EnvConfig {
 
 	sessionSecret := os.Getenv("SESSION_SECRET")
 	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
+	encryptionKey := os.Getenv("ENCRYPTION_KEY")
 	appEnv := os.Getenv("APP_ENV")
+
+	// Validate encryption key
+	if len(encryptionKey) != 32 {
+		log.Fatal("ENCRYPTION_KEY must be exactly 32 characters for AES-256")
+	}
 
 	// Frontend URL for OAuth redirects (defaults to http://localhost:8080 in dev)
 	frontendURL := os.Getenv("FRONTEND_URL")
@@ -119,6 +127,7 @@ func loadEnv() EnvConfig {
 
 		JWTSecret:     string(jwtSecret),
 		SessionSecret: sessionSecret,
+		EncryptionKey: encryptionKey,
 		AppEnv:        appEnv,
 		FrontendURL:   frontendURL,
 	}
@@ -222,6 +231,12 @@ func main() {
 	}
 
 	// --- Services and Handlers ---
+	// Initialize encryption service
+	encryptionService, err := utils.NewEncryptionService([]byte(envConfig.EncryptionKey))
+	if err != nil {
+		log.Fatal("Failed to initialize encryption service:", err)
+	}
+
 	supabaseRepository := repo_supabase.NewSupabaseRepository(envConfig.SupabaseURL, envConfig.SupabaseKey)
 	cloudflareRepository, err := repo_cloudflare.NewCloudflareRepository(
 		context.Background(),
@@ -235,8 +250,8 @@ func main() {
 		log.Fatal("Failed to initialize Cloudflare repository:", err)
 	}
 	userRepository := repo_user.NewUserRepository(supabaseRepository)
-	twitterRepository := repo_twitter.NewTwitterRepository(supabaseRepository, twitterConfig)
-	instagramRepository := repo_instagram.NewInstagramRepository(supabaseRepository, cloudflareRepository)
+	twitterRepository := repo_twitter.NewTwitterRepository(supabaseRepository, twitterConfig, encryptionService)
+	instagramRepository := repo_instagram.NewInstagramRepository(supabaseRepository, cloudflareRepository, encryptionService)
 
 	userService := service_user.NewUserService(userRepository, instagramRepository, twitterRepository, []byte(envConfig.JWTSecret))
 	isProduction := envConfig.AppEnv == "production"

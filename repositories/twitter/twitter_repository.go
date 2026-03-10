@@ -3,6 +3,7 @@ package twitter
 import (
 	"backend/models"
 	repo_supabase "backend/repositories/supabase"
+	"backend/utils"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -48,20 +49,33 @@ type TwitterRepository interface {
 type twitterRepositoryImpl struct {
 	repo_supabase *repo_supabase.SupabaseRepository
 	twitterConfig *oauth1.Config
+	encryption    *utils.EncryptionService
 }
 
-func NewTwitterRepository(supabaseRepository *repo_supabase.SupabaseRepository, twitterConfig *oauth1.Config) TwitterRepository {
+func NewTwitterRepository(supabaseRepository *repo_supabase.SupabaseRepository, twitterConfig *oauth1.Config, encryption *utils.EncryptionService) TwitterRepository {
 	return &twitterRepositoryImpl{
 		repo_supabase: supabaseRepository,
 		twitterConfig: twitterConfig,
+		encryption:    encryption,
 	}
 }
 
 func (t *twitterRepositoryImpl) SaveToken(userID string, accessToken string, accessSecret string) error {
+    // Encrypt tokens before storage
+    encryptedToken, err := t.encryption.Encrypt(accessToken)
+    if err != nil {
+        return fmt.Errorf("failed to encrypt access token: %w", err)
+    }
+
+    encryptedSecret, err := t.encryption.Encrypt(accessSecret)
+    if err != nil {
+        return fmt.Errorf("failed to encrypt access secret: %w", err)
+    }
+
     payload := map[string]string{
-        "user_id":      userID,
-        "access_token": accessToken,
-        "access_secret": accessSecret,
+        "user_id":       userID,
+        "access_token":  encryptedToken,
+        "access_secret": encryptedSecret,
     }
     payloadBytes, err := json.Marshal(payload)
     if err != nil {
@@ -118,7 +132,18 @@ func (t *twitterRepositoryImpl) GetCredentials(userID string) (string, string, e
 		return "", "", fmt.Errorf("twitter tokens not found")
 	}
 
-	return twitterModel[0].AccessToken, twitterModel[0].AccessSecret, nil
+	// Decrypt tokens after retrieval
+	accessToken, err := t.encryption.Decrypt(twitterModel[0].AccessToken)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to decrypt access token: %w", err)
+	}
+
+	accessSecret, err := t.encryption.Decrypt(twitterModel[0].AccessSecret)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to decrypt access secret: %w", err)
+	}
+
+	return accessToken, accessSecret, nil
 }
 
 func (t *twitterRepositoryImpl) CheckTokens(accessToken string, accessSecret string) (error) {

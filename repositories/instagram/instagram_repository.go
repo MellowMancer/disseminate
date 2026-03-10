@@ -2,6 +2,7 @@ package instagram
 
 import (
 	"backend/models"
+	"backend/utils"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -39,20 +40,28 @@ type InstagramRepository interface {
 type instagramRepositoryImpl struct {
 	repo_supabase   *repo_supabase.SupabaseRepository
 	repo_cloudflare *repo_cloudflare.CloudflareRepository
+	encryption      *utils.EncryptionService
 }
 
-func NewInstagramRepository(supabaseRepository *repo_supabase.SupabaseRepository, cloudflareRepository *repo_cloudflare.CloudflareRepository) InstagramRepository {
+func NewInstagramRepository(supabaseRepository *repo_supabase.SupabaseRepository, cloudflareRepository *repo_cloudflare.CloudflareRepository, encryption *utils.EncryptionService) InstagramRepository {
 	return &instagramRepositoryImpl{
 		repo_supabase:   supabaseRepository,
 		repo_cloudflare: cloudflareRepository,
+		encryption:      encryption,
 	}
 }
 
 func (i *instagramRepositoryImpl) SaveToken(accessToken string, userID string, instagramID string, expirationTime string) error {
+	// Encrypt token before storage
+	encryptedToken, err := i.encryption.Encrypt(accessToken)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt access token: %w", err)
+	}
+
 	payload := models.InstagramModel{
 		UserID:      userID,
 		InstagramID: instagramID,
-		AccessToken: accessToken,
+		AccessToken: encryptedToken,
 		ExpiresAt:   expirationTime,
 	}
 
@@ -255,7 +264,13 @@ func (i *instagramRepositoryImpl) GetCredentials(userID string) (string, string,
 		return "", "", fmt.Errorf("instagram tokens not found")
 	}
 
-	return instagramModel[0].AccessToken, instagramModel[0].InstagramID, nil
+	// Decrypt token after retrieval
+	accessToken, err := i.encryption.Decrypt(instagramModel[0].AccessToken)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to decrypt access token: %w", err)
+	}
+
+	return accessToken, instagramModel[0].InstagramID, nil
 }
 
 func (i *instagramRepositoryImpl) CheckPublishLimit(accessToken string, instagramID string) (bool, error) {
