@@ -4,10 +4,9 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"backend/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
-	"fmt"
-	"errors"
 )
 
 const login_path = "/login"
@@ -29,7 +28,7 @@ func JWTMiddleware(secret []byte, excludedPaths []string) echo.MiddlewareFunc {
 			}
 
 			// 3. Validate the token and extract claims.
-			claims, err := validateToken(cookie.Value, secret)
+			claims, err := utils.ValidateJWT(cookie.Value, secret)
 			if err != nil {
 				log.Printf("JWTMiddleware: invalid token (%v), redirecting to /login", err)
 				return c.Redirect(http.StatusSeeOther, login_path)
@@ -51,27 +50,6 @@ func isPathExcluded(path string, excluded []string) bool {
 	return false
 }
 
-func validateToken(tokenString string, secret []byte) (jwt.MapClaims, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Check the signing method.
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return secret, nil
-	})
-
-	// This single check handles parsing errors (e.g., malformed token, signature mismatch).
-	if err != nil {
-		return nil, err
-	}
-
-	// Check if the token is valid and if the claims can be asserted to MapClaims.
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims, nil
-	}
-
-	return nil, errors.New("invalid token or claims type")
-}
 
 const default_redirect_path = "/"
 
@@ -95,31 +73,17 @@ func RedirectIfAuthenticated(secret []byte) echo.MiddlewareFunc {
 }
 
 // isAuthenticated checks if a user is authenticated by validating their JWT token.
-// It returns true if authenticated, false otherwise
+// It returns the claims if authenticated, error otherwise
 func isAuthenticated(c echo.Context, secret []byte) (jwt.MapClaims, error) {
 	cookie, err := c.Cookie("jwt_token")
 	if err != nil {
 		// No JWT cookie found, user is not authenticated.
-		return nil, errors.New("jwt_token cookie not found")
+		return nil, utils.ErrInvalidToken
 	}
 
-	tokenString := cookie.Value
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return secret, nil
-	})
-
-	if err != nil || !token.Valid {
-		// Token parsing failed or token is invalid.
-		return nil, fmt.Errorf("token validation failed: %w", err)
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		// Claims could not be asserted to MapClaims.
-		return nil, errors.New("could not assert token claims to MapClaims")
+	claims, err := utils.ValidateJWT(cookie.Value, secret)
+	if err != nil {
+		return nil, err
 	}
 
 	return claims, nil

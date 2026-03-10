@@ -8,8 +8,8 @@ import (
 )
 
 func RegisterAuthRoutes(a *echo.Group, h *handlers.Handler, jwtSecret []byte) {
-	a.POST("/login", h.Login, middlewares.RedirectIfAuthenticated(jwtSecret))
-	a.POST("/signup", h.SignUp, middlewares.RedirectIfAuthenticated(jwtSecret))
+	a.POST("/login", h.Login, middlewares.AuthRateLimiter(), middlewares.RedirectIfAuthenticated(jwtSecret))
+	a.POST("/signup", h.SignUp, middlewares.AuthRateLimiter(), middlewares.RedirectIfAuthenticated(jwtSecret))
 	a.POST("/logout", h.Logout, middlewares.RedirectIfAuthenticated(jwtSecret))
 	a.GET("/status", h.AuthStatus)
 	a.GET("/oauth_status", h.OAuthStatus)

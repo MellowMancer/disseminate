@@ -2,13 +2,14 @@ package routes
 
 import (
 	"backend/handlers"
+	"backend/middlewares"
 	"github.com/labstack/echo/v4"
 )
 
 func RegisterInstagramRoutes(api *echo.Group, h *handlers.InstagramHandler) {
-	twitter := api.Group("/instagram")
-	
-	twitter.GET("/link/begin", h.BeginInstagramLink) // GET /api/instagram/link/begin
+	instagram := api.Group("/instagram")
 
-	
+	instagram.GET("/link/begin", h.BeginInstagramLink, middlewares.StrictAuthRateLimiter()) // GET /api/instagram/link/begin
+
+
 }

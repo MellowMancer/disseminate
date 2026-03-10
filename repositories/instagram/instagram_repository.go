@@ -14,6 +14,8 @@ import (
 	"mime/multipart"
 	"net/http"
 	_ "net/http/httputil"
+	"net/url"
+	"strings"
 	"time"
 )
 
@@ -113,17 +115,13 @@ func (i *instagramRepositoryImpl) updateToken(userID string, payloadBytes []byte
 }
 
 func (i *instagramRepositoryImpl) GetInstagramID(accessToken string) (string, error) {
-	url := "https://graph.instagram.com/me"
+	url := "https://graph.instagram.com/me?fields=id"
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", err
 	}
 
-	q := req.URL.Query()
-	q.Add("fields", "id")
-	q.Add("access_token", accessToken)
-
-	req.URL.RawQuery = q.Encode()
+	req.Header.Set("Authorization", "Bearer "+accessToken)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -148,16 +146,18 @@ func (i *instagramRepositoryImpl) GetInstagramID(accessToken string) (string, er
 }
 
 func (i *instagramRepositoryImpl) GetAccessToken(accessToken string, clientSecret string) (string, int, error) {
-	req, err := http.NewRequest("GET", longTimeTokenURL, nil)
+	// Use POST with form data to avoid exposing sensitive data in query strings
+	formData := url.Values{}
+	formData.Set("grant_type", "ig_exchange_token")
+	formData.Set("client_secret", clientSecret)
+	formData.Set("access_token", accessToken)
+
+	req, err := http.NewRequest("POST", longTimeTokenURL, strings.NewReader(formData.Encode()))
 	if err != nil {
 		return "", 0, err
 	}
 
-	q := req.URL.Query()
-	q.Add("grant_type", "ig_exchange_token")
-	q.Add("client_secret", clientSecret)
-	q.Add("access_token", accessToken)
-	req.URL.RawQuery = q.Encode()
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -186,10 +186,19 @@ func (i *instagramRepositoryImpl) GetAccessToken(accessToken string, clientSecre
 }
 
 func (i *instagramRepositoryImpl) CheckTokens(accessToken string) error {
-	resp, err := http.Get("https://graph.instagram.com/me?access_token=" + accessToken)
+	req, err := http.NewRequest("GET", "https://graph.instagram.com/me", nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil || resp.StatusCode != 200 {
 		return fmt.Errorf("tokens have been revoked, please connect your account again")
 	}
+	defer resp.Body.Close()
+
 	return nil
 }
 
@@ -259,9 +268,10 @@ func (i *instagramRepositoryImpl) CheckPublishLimit(accessToken string, instagra
 	}
 
 	q := req.URL.Query()
-	q.Add("access_token", accessToken)
 	q.Add("fields", "quota_usage,config")
 	req.URL.RawQuery = q.Encode()
+
+	req.Header.Set("Authorization", "Bearer "+accessToken)
 	log.Printf("[CHECK_PUBLISH_LIMIT] --- Request URL: %s", req.URL.String())
 
 	client := &http.Client{}

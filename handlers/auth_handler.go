@@ -8,7 +8,7 @@ import (
 	"unicode"
 
 	emailverifier "github.com/AfterShip/email-verifier"
-	"github.com/golang-jwt/jwt/v5"
+	// "github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
@@ -164,24 +164,14 @@ func (h *Handler) AuthStatus(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]any{"authenticated": false})
 	}
 
-	token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, echo.ErrUnauthorized
-		}
-		jwtSecret := h.UserService.GetJWTSecret()
-		return jwtSecret, nil
-	})
-	if token == nil || !token.Valid {
+	jwtSecret := h.UserService.GetJWTSecret()
+	claims, err := utils.ValidateJWT(cookie.Value, jwtSecret)
+	if err != nil {
 		return c.JSON(http.StatusOK, map[string]any{"authenticated": false})
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return c.JSON(http.StatusOK, map[string]any{"authenticated": false})
-	}
-
-	email, ok := claims["sub"].(string)
-	if !ok {
+	email, err := utils.ExtractEmailFromClaims(claims)
+	if err != nil {
 		return c.JSON(http.StatusOK, map[string]any{"authenticated": false})
 	}
 

@@ -57,7 +57,7 @@ type EnvConfig struct {
 	FrontendURL   string
 }
 
-//go:embed all:frontend/dist
+// go:embed all:frontend/dist
 var embeddedFrontend embed.FS
 
 const TWITTERCALLBACKPATH = "/twitter/link/callback"

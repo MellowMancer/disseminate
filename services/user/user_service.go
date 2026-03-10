@@ -5,6 +5,7 @@ import (
 	repo_instagram "backend/repositories/instagram"
 	repo_twitter "backend/repositories/twitter"
 	repo_user "backend/repositories/user"
+	"backend/utils"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
@@ -95,26 +96,16 @@ func (s *userServiceImpl) IsLoggedIn(c echo.Context) (string, error) {
 		return "", err
 	}
 
-	token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, echo.ErrUnauthorized
-		}
-		jwtSecret := s.GetJWTSecret()
-		return jwtSecret, nil
-	})
-	if token == nil || !token.Valid {
+	claims, err := utils.ValidateJWT(cookie.Value, s.jwtSecret)
+	if err != nil {
 		return "", err
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return "", fmt.Errorf("Could not find claims")
+	email, err := utils.ExtractEmailFromClaims(claims)
+	if err != nil {
+		return "", err
 	}
 
-	email, ok := claims["sub"].(string)
-	if !ok {
-		return "", fmt.Errorf("Could not find email")
-	}
 	return email, nil
 }
 
